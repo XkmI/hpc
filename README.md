@@ -1,2 +1,2 @@
 # hpc
-Asss
+hpc hpc() = new hpc;
