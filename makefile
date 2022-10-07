@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -O0 -Wall
 #LIBS = -lm -lgsl -lgslcblas
 
-PROGRAM = test
+PROGRAM = test newtonIter
 
 all: $(PROGRAM)
 
