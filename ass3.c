@@ -12,8 +12,8 @@ typedef struct {
 
 typedef struct {
   complex double z_val;
-  size_t **attractors;
-  char **convergences;
+  char **attractors;
+  size_t **convergences;
   int ib;
   int istep;
   size_t length;
@@ -24,8 +24,8 @@ typedef struct {
 } thrd_info_compute_t;
 
 typedef struct {
-  size_t **attractors;
-  char **convergences;
+  char **attractors;
+  size_t **convergences;
   size_t length;
   size_t n_threads;
   FILE* fz;
@@ -78,9 +78,9 @@ main_thrd_write(
   void *args
   )
 {
-  const thrd_info_write_t *thrd_info = (thrd_info_tcheck_t*) args;
-  size_t **attractors= thrd_info->attractors;
-  char **convergences = thrd_info->convergences;
+  const thrd_info_write_t *thrd_info = (thrd_info_write_t*) args;
+  char **attractors= thrd_info->attractors;
+  size_t **convergences = thrd_info->convergences;
   size_t length = thrd_info->length;
   size_t n_threads = thrd_info->n_threads;
   FILE* fz = thrd_info->fz;
@@ -88,8 +88,6 @@ main_thrd_write(
   mtx_t *mtx = thrd_info->mtx;
   cnd_t *cnd = thrd_info->cnd;
   int_padded *status = thrd_info->status;
- 
-  const float eps = 1e-1;
 
   // We do not increment ix in this loop, but in the inner one.
   for ( int ix = 0, ibnd; ix < length; ) {

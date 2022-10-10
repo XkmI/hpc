@@ -51,8 +51,8 @@ int main() {
         break;
     case '2':
         for (;;) {
-            realdum = crealf(zVal);
-            imagdum = cimagf(zVal);
+            realdum = fabsf(crealf(zVal));
+            imagdum = fabsf(cimagf(zVal));
             if ((realdum > 1e10) || (imagdum > 1e10)) {
                 zeroIndex = 'F';
                 break;
@@ -78,8 +78,8 @@ int main() {
         break;
     case '3':
         for (;;) {
-            realdum = crealf(zVal);
-            imagdum = cimagf(zVal);
+            realdum = fabsf(crealf(zVal));
+            imagdum = fabsf(cimagf(zVal));
             if ((realdum > 1e10) || (imagdum > 1e10)) {
                 zeroIndex = 'F';
                 break;
@@ -109,8 +109,8 @@ int main() {
         break;
     case '4':
         for (;;) {
-            realdum = crealf(zVal);
-            imagdum = cimagf(zVal);
+            realdum = fabsf(crealf(zVal));
+            imagdum = fabsf(cimagf(zVal));
             if ((realdum > 1e10) || (imagdum > 1e10)) {
                 zeroIndex = 'F';
                 break;
@@ -144,8 +144,8 @@ int main() {
         break;
     case '5':
         for (;;) {
-            realdum = crealf(zVal);
-            imagdum = cimagf(zVal);
+            realdum = fabsf(crealf(zVal));
+            imagdum = fabsf(cimagf(zVal));
             if ((realdum > 1e10) || (imagdum > 1e10)) {
                 zeroIndex = 'F';
                 break;
@@ -184,8 +184,8 @@ int main() {
         break;
     case '6':
         for (;;) {
-            realdum = crealf(zVal);
-            imagdum = cimagf(zVal);
+            realdum = fabsf(crealf(zVal));
+            imagdum = fabsf(cimagf(zVal));
             if ((realdum > 1e10) || (imagdum > 1e10)) {
                 zeroIndex = 'F';
                 break;
@@ -228,8 +228,8 @@ int main() {
         break;
     case '7':
         for (;;) {
-            realdum = crealf(zVal);
-            imagdum = cimagf(zVal);
+            realdum = fabsf(crealf(zVal));
+            imagdum = fabsf(cimagf(zVal));
             if ((realdum > 1e10) || (imagdum > 1e10)) {
                 zeroIndex = 'F';
                 break;
@@ -276,8 +276,8 @@ int main() {
         break;
     case '8':
         for (;;) {
-            realdum = crealf(zVal);
-            imagdum = cimagf(zVal);
+            realdum = fabsf(crealf(zVal));
+            imagdum = fabsf(cimagf(zVal));
             if ((realdum > 1e10) || (imagdum > 1e10)) {
                 zeroIndex = 'F';
                 break;
@@ -328,8 +328,8 @@ int main() {
         break;
     case '9':
         for (;;) {
-            realdum = crealf(zVal);
-            imagdum = cimagf(zVal);
+            realdum = fabsf(crealf(zVal));
+            imagdum = fabsf(cimagf(zVal));
             if ((realdum > 1e10) || (imagdum > 1e10)) {
                 zeroIndex = 'F';
                 break;
