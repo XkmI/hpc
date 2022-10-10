@@ -3,7 +3,7 @@ CC = gcc
 CFLAGS = -O0 -Wall
 #LIBS = -lm -lgsl -lgslcblas
 
-PROGRAM = test newtonIter
+PROGRAM = test newtonIter complexTest
 
 .PHONY: all
 all: $(PROGRAM)
