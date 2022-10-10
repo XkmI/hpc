@@ -1,9 +1,7 @@
-PROGRAM = test
+PROGRAM = test newtonIter complexTest
 CC = gcc
 CFLAGS = -O0 -Wall
 #LIBS = -lm -lgsl -lgslcblas
-
-PROGRAM = test newtonIter complexTest
 
 .PHONY: all
 all: $(PROGRAM)
