@@ -12,8 +12,8 @@ typedef struct {
 
 typedef struct {
   complex double z_val;
-  size_t **zeroes;
-  char **iterations;
+  size_t **attractors;
+  char **convergences;
   int ib;
   int istep;
   size_t length;
@@ -21,21 +21,22 @@ typedef struct {
   mtx_t *mtx;
   cnd_t *cnd;
   int_padded *status;
-} thrd_info_newton_t;
+} thrd_info_compute_t;
 
 typedef struct {
-  complex double z_val;
-  size_t **zeroes;
-  char **iterations;
+  size_t **attractors;
+  char **convergences;
   size_t length;
   size_t n_threads;
+  FILE* fz;
+  FILE* fi;
   mtx_t *mtx;
   cnd_t *cnd;
   int_padded *status;
-} thrd_info_picture_t;
+} thrd_info_write_t;
 
 int
-main_thrd(
+main_thrd_compute(
   void *args
   )
 {
@@ -44,18 +45,18 @@ main_thrd(
   float **w = thrd_info->w;
   const int ib = thrd_info->ib;
   const int istep = thrd_info->istep;
-  const int sz = thrd_info->sz;
+  const int length = thrd_info->length;
   const int tx = thrd_info->tx;
   mtx_t *mtx = thrd_info->mtx;
   cnd_t *cnd = thrd_info->cnd;
   int_padded *status = thrd_info->status;
 
-  for ( int ix = ib; ix < sz; ix += istep ) {
+  for ( int ix = ib; ix < length; ix += istep ) {
     const float *vix = v[ix];
     // We allocate the rows of the result before computing, and free them in another thread.
-    float *wix = (float*) malloc(sz*sizeof(float));
+    float *wix = (float*) malloc(length*sizeof(float));
     
-    for ( int jx = 0; jx < sz; ++jx )
+    for ( int jx = 0; jx < length; ++jx )
       wix[jx] = sqrtf(vix[jx]);
     
      mtx_lock(mtx);
@@ -73,15 +74,17 @@ main_thrd(
 }
 
 int
-main_thrd_check(
+main_thrd_write(
   void *args
   )
 {
-  const thrd_info_check_t *thrd_info = (thrd_info_check_t*) args;
-  const float **v = thrd_info->v;
-  float **w = thrd_info->w;
-  const int sz = thrd_info->sz;
-  const int nthrds = thrd_info->nthrds;
+  const thrd_info_write_t *thrd_info = (thrd_info_tcheck_t*) args;
+  size_t **attractors= thrd_info->attractors;
+  char **convergences = thrd_info->convergences;
+  size_t length = thrd_info->length;
+  size_t n_threads = thrd_info->n_threads;
+  FILE* fz = thrd_info->fz;
+  FILE* fi = thrd_info->fi;
   mtx_t *mtx = thrd_info->mtx;
   cnd_t *cnd = thrd_info->cnd;
   int_padded *status = thrd_info->status;
@@ -89,44 +92,36 @@ main_thrd_check(
   const float eps = 1e-1;
 
   // We do not increment ix in this loop, but in the inner one.
-  for ( int ix = 0, ibnd; ix < sz; ) {
+  for ( int ix = 0, ibnd; ix < length; ) {
 
     // If no new lines are available, we wait.
     for ( mtx_lock(mtx); ; ) {
       // We extract the minimum of all status variables.
-      ibnd = sz;
+      ibnd = length;
       for ( int tx = 0; tx < nthrds; ++tx )
         if ( ibnd > status[tx].val )
           ibnd = status[tx].val;
  
-        if ( ibnd <= ix )
-          // We rely on spurious wake-ups, which in practice happen, but are not
-          // guaranteed.
-          cnd_wait(cnd,mtx);
-        else {
-          mtx_unlock(mtx);
-          break;
-        }
+      if ( ibnd <= ix )
+        // We rely on spurious wake-ups, which in practice happen, but are not
+        // guaranteed.
+        cnd_wait(cnd,mtx);
+      else {
+        mtx_unlock(mtx);
+        break;
+      }
 
-        // Instead of employing a conditional variable, we could also invoke
-        // thrd_yield or thrd_sleep in order to yield to other threads or grant a
-        // specified time to the computation threads.
+      // Instead of employing a conditional variable, we could also invoke
+      // thrd_yield or thrd_sleep in order to yield to other threads or grant a
+      // specified time to the computation threads.
     }
 
-    fprintf(stderr, "checking until %i\n", ibnd);
+    fprintf(stderr, "writing until %i\n", ibnd);
 
     // We do not initialize ix in this loop, but in the outer one.
     for ( ; ix < ibnd; ++ix ) {
-      // We only check the last element in w, since we want to illustrate the
-      // situation where the check thread completes fast than the computaton
-      // threads.
-      int jx = sz-1;
-      float diff = v[ix][jx] - w[ix][jx] * w[ix][jx];
-      if ( diff < -eps || diff > eps ) {
-        fprintf(stderr, "incorrect compuation at %i %i: %f %f %f\n",
-                ix, jx, diff, v[ix][jx], w[ix][jx]);
-        // This exists the whole program, including all other threads.
-        exit(1);
+      for(size_t jx = 0; jx < length; jx++) {
+          
       }
 
       // We free the component of w, since it will never be used again.
@@ -161,16 +156,16 @@ main(int argc, char* argv[])
         abort ();
   }
 
-float **v = (float**) malloc(sz*sizeof(float*));
-float **w = (float**) malloc(sz*sizeof(float*));
-float *ventries = (float*) malloc(sz*sz*sizeof(float));
-// The entries of w will be allocated in the computation threads are freed in
-// the check thread.
+  float **v = (float**) malloc(length*sizeof(float*));
+  float **w = (float**) malloc(length*sizeof(float*));
+  float *ventries = (float*) malloc(length*length*sizeof(float));
+  // The entries of w will be allocated in the computation threads are freed in
+  // the check thread.
 
-  for ( int ix = 0, jx = 0; ix < sz; ++ix, jx += sz )
+  for ( int ix = 0, jx = 0; ix < length; ++ix, jx += length )
     v[ix] = ventries + jx;
 
-  for ( int ix = 0; ix < sz*sz; ++ix )
+  for ( int ix = 0; ix < length*length; ++ix )
     ventries[ix] = ix;
 
   const int nthrds = 8;
@@ -193,7 +188,7 @@ float *ventries = (float*) malloc(sz*sz*sizeof(float));
     thrds_info[tx].w = w;
     thrds_info[tx].ib = tx;
     thrds_info[tx].istep = nthrds;
-    thrds_info[tx].sz = sz;
+    thrds_info[tx].length = length;
     thrds_info[tx].tx = tx;
     thrds_info[tx].mtx = &mtx;
     thrds_info[tx].cnd = &cnd;
@@ -211,7 +206,7 @@ float *ventries = (float*) malloc(sz*sz*sizeof(float));
   {
     thrd_info_check.v = (const float**) v;
     thrd_info_check.w = w;
-    thrd_info_check.sz = sz;
+    thrd_info_check.length = length;
     thrd_info_check.nthrds = nthrds;
     thrd_info_check.mtx = &mtx;
     thrd_info_check.cnd = &cnd;
