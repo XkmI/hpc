@@ -89,6 +89,19 @@ main_thrd_write(
   cnd_t *cnd = thrd_info->cnd;
   int_padded *status = thrd_info->status;
 
+  char* rgbs[10] = {
+    "0   0   0   ",
+    "255 140 0   ",
+    "255 216 0   ",
+    "216 255 0   ",
+    "124 255 0   ",
+    "137 0   255 ",
+    "255 0   135 ",
+    "255 0   12  ",
+    "107 0   255 ",
+    "0   244 255 "
+  }
+
   // We do not increment ix in this loop, but in the inner one.
   for ( int ix = 0, ibnd; ix < length; ) {
 
