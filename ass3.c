@@ -11,7 +11,6 @@ typedef struct {
 } int_padded;
 
 typedef struct {
-  complex double z_val;
   char **attractors;
   size_t **convergences;
   int ib;
@@ -162,7 +161,7 @@ main(int argc, char* argv[])
 {
 
   size_t length = 21;
-  size_t n_threads = 1;
+  const int nthrds = 1;
   char degree = "1";
   
   while ((c = getopt (argc, argv, "tl:")) != -1)
@@ -172,7 +171,7 @@ main(int argc, char* argv[])
         length = strtol(optarg,NULL,10);
         break;
       case 't':
-        n_threads = strtol(optarg,NULL,10);
+        nthrds = strtol(optarg,NULL,10);
         break;
       case '?':
         degree = optopt[0]; 
@@ -181,24 +180,16 @@ main(int argc, char* argv[])
         abort ();
   }
 
-  float **v = (float**) malloc(length*sizeof(float*));
-  float **w = (float**) malloc(length*sizeof(float*));
-  float *ventries = (float*) malloc(length*length*sizeof(float));
+  char **attractors = (char**) malloc(length*sizeof(char*));
+  size_t **convergences = (size_t**) malloc(length*sizeof(size_t*));
   // The entries of w will be allocated in the computation threads are freed in
   // the check thread.
 
-  for ( int ix = 0, jx = 0; ix < length; ++ix, jx += length )
-    v[ix] = ventries + jx;
-
-  for ( int ix = 0; ix < length*length; ++ix )
-    ventries[ix] = ix;
-
-  const int nthrds = 8;
   thrd_t thrds[nthrds];
-  thrd_info_t thrds_info[nthrds];
+  thrd_info_compute_t thrds_info_compute[nthrds];
 
-  thrd_t thrd_check;
-  thrd_info_check_t thrd_info_check;
+  thrd_t thrd_write;
+  thrd_info_write_t thrd_info_write;
     
   mtx_t mtx;
   mtx_init(&mtx, mtx_plain);
@@ -209,18 +200,18 @@ main(int argc, char* argv[])
   int_padded status[nthrds];
 
   for ( int tx = 0; tx < nthrds; ++tx ) {
-    thrds_info[tx].v = (const float**) v;
-    thrds_info[tx].w = w;
-    thrds_info[tx].ib = tx;
-    thrds_info[tx].istep = nthrds;
-    thrds_info[tx].length = length;
-    thrds_info[tx].tx = tx;
-    thrds_info[tx].mtx = &mtx;
-    thrds_info[tx].cnd = &cnd;
-    thrds_info[tx].status = status;
+    thrds_info_compute[tx].attractors = attractors;
+    thrds_info_compute[tx].convergences = convergences;
+    thrds_info_compute[tx].ib = tx;
+    thrds_info_compute[tx].istep = nthrds;
+    thrds_info_compute[tx].length = length;
+    thrds_info_compute[tx].tx = tx;
+    thrds_info_compute[tx].mtx = &mtx;
+    thrds_info_compute[tx].cnd = &cnd;
+    thrds_info_compute[tx].status = status;
     status[tx].val = -1;
 
-    int r = thrd_create(thrds+tx, main_thrd, (void*) (thrds_info+tx));
+    int r = thrd_create(thrds+tx, main_thrd_compute, (void*) (thrds_info_compute+tx));
     if ( r != thrd_success ) {
       fprintf(stderr, "failed to create thread\n");
       exit(1);
@@ -229,17 +220,17 @@ main(int argc, char* argv[])
   }
 
   {
-    thrd_info_check.v = (const float**) v;
-    thrd_info_check.w = w;
-    thrd_info_check.length = length;
-    thrd_info_check.nthrds = nthrds;
-    thrd_info_check.mtx = &mtx;
-    thrd_info_check.cnd = &cnd;
+    thrd_info_write.attractors = attractors;
+    thrd_info_write.convergences = convergences;
+    thrd_info_write.length = length;
+    thrd_info_write.nthrds = nthrds;
+    thrd_info_write.mtx = &mtx;
+    thrd_info_write.cnd = &cnd;
     // It is important that we have initialize status in the previous for-loop,
     // since it will be consumed by the check threads.
-    thrd_info_check.status = status;
+    thrd_info_write.status = status;
 
-    int r = thrd_create(&thrd_check, main_thrd_check, (void*) (&thrd_info_check));
+    int r = thrd_create(&thrd_write, main_thrd_write, (void*) (&thrd_info_write));
     if ( r != thrd_success ) {
       fprintf(stderr, "failed to create thread\n");
       exit(1);
@@ -248,12 +239,11 @@ main(int argc, char* argv[])
 
   {
     int r;
-    thrd_join(thrd_check, &r);
+    thrd_join(thrd_write, &r);
   }
 
-  free(ventries);
-  free(v);
-  free(w);
+  free(attractors);
+  free(convergences);
 
   mtx_destroy(&mtx);
   cnd_destroy(&cnd);
