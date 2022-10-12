@@ -28,8 +28,8 @@ typedef struct {
   size_t **convergences;
   size_t length;
   size_t n_threads;
-  FILE* fz;
-  FILE* fi;
+  FILE* fa;
+  FILE* fc;
   mtx_t *mtx;
   cnd_t *cnd;
   int_padded *status;
@@ -83,11 +83,20 @@ main_thrd_write(
   size_t **convergences = thrd_info->convergences;
   size_t length = thrd_info->length;
   size_t n_threads = thrd_info->n_threads;
-  FILE* fz = thrd_info->fz;
-  FILE* fi = thrd_info->fi;
+  FILE* fa = thrd_info->fa;
+  FILE* fc = thrd_info->fc;
   mtx_t *mtx = thrd_info->mtx;
   cnd_t *cnd = thrd_info->cnd;
   int_padded *status = thrd_info->status;
+
+  char attractor_rgb[length*12];
+  char convergence_grey[length*12];
+  int conv_capped;
+
+  char greys[100*12];
+  for(size_t ix; ix < 100; ++ix){
+    sprintf(&greys[ix*12], "%-4d%-4d%-4d", ix, ix, ix);
+  }
 
   char* rgbs[10] = {
     "0   0   0   ",
@@ -100,7 +109,7 @@ main_thrd_write(
     "255 0   12  ",
     "107 0   255 ",
     "0   244 255 "
-  }
+  };
 
   // We do not increment ix in this loop, but in the inner one.
   for ( int ix = 0, ibnd; ix < length; ) {
@@ -132,11 +141,16 @@ main_thrd_write(
     // We do not initialize ix in this loop, but in the outer one.
     for ( ; ix < ibnd; ++ix ) {
       for(size_t jx = 0; jx < length; jx++) {
-          
+        conv_capped = convergences[ix][jx] > 99 ? 99 : convergences[ix][jx];
+        memcpy(&attractor_rgb[12*jx], rgbs[(short) attractors[ix][jx]], 12);
+        memcpy(&convergence_grey[12*jx], greys[conv_capped], 12);
       }
+      fwrite(&attractor_rgb, sizeof(char), 12*length+1, fa);
+      fwrite(&convergence_grey, sizeof(char), 12*length+1, fa);
 
       // We free the component of w, since it will never be used again.
-      free(w[ix]);
+      free(attractors[ix]);
+      free(convergences[ix]);
     }
   }
 
