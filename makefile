@@ -1,14 +1,13 @@
 PROGRAM = test newtonIter complexTest
 CC = gcc
 CFLAGS = -O0 -Wall
-#LIBS = -lm -lgsl -lgslcblas
+LIBS = -lpthread #-lm -lgsl -lgslcblas
 
 .PHONY: all
 all: $(PROGRAM)
 
 $(PROGRAM) : %: %.c;
-	$(CC) -o $@ $< $(CFLAGS) 
-#$(LIBS)
+	$(CC) -o $@ $< $(CFLAGS) $(LIBS)
 
 .PHONY: clean
 clean:
