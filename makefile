@@ -1,4 +1,4 @@
-PROGRAM = test newtonIter complexTest
+PROGRAM = test newtonIter complexTest ass3
 CC = gcc
 CFLAGS = -O0 -Wall
 LIBS = -lpthread #-lm -lgsl -lgslcblas

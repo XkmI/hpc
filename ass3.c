@@ -4,6 +4,7 @@
 #include <string.h>
 #include <threads.h>
 #include <complex.h>
+#include <unistd.h>
 
 #define TOLSQ 1e-6
 #define ABSSQ(zfl) (crealf(zfl)*crealf(zfl) + cimagf(zfl)*cimagf(zfl))
@@ -362,7 +363,7 @@ typedef struct {
   char **attractors;
   size_t **convergences;
   size_t length;
-  size_t n_threads;
+  size_t nthrds;
   FILE* fa;
   FILE* fc;
   mtx_t *mtx;
@@ -375,7 +376,7 @@ main_thrd_compute(
   void *args
   )
 {
-  const thrd_info_compute_t *thrd_info = (thrd_info_t*) args;
+  const thrd_info_compute_t *thrd_info = (thrd_info_compute_t*) args;
   char **attractors = thrd_info->attractors;
   size_t **convergences = thrd_info->convergences;
   char degree = thrd_info->degree;
@@ -419,7 +420,7 @@ main_thrd_write(
   char **attractors= thrd_info->attractors;
   size_t **convergences = thrd_info->convergences;
   size_t length = thrd_info->length;
-  size_t n_threads = thrd_info->n_threads;
+  size_t nthrds= thrd_info->nthrds;
   FILE* fa = thrd_info->fa;
   FILE* fc = thrd_info->fc;
   mtx_t *mtx = thrd_info->mtx;
@@ -431,8 +432,8 @@ main_thrd_write(
   int conv_capped;
 
   char greys[100*12];
-  for(size_t ix; ix < 100; ++ix){
-    sprintf(&greys[ix*12], "%-4d%-4d%-4d", ix, ix, ix);
+  for(size_t kx = 0; kx < 100; ++kx){
+    sprintf(&greys[kx*12], "%-4ld%-4ld%-4ld", kx, kx, kx);
   }
 
   char* rgbs[10] = {
@@ -480,10 +481,10 @@ main_thrd_write(
       for(size_t jx = 0; jx < length; jx++) {
         conv_capped = convergences[ix][jx] > 99 ? 99 : convergences[ix][jx];
         memcpy(&attractor_rgb[12*jx], rgbs[(short) attractors[ix][jx]], 12);
-        memcpy(&convergence_grey[12*jx], greys[conv_capped], 12);
+        memcpy(&convergence_grey[12*jx], &greys[12*conv_capped], 12);
       }
       fwrite(&attractor_rgb, sizeof(char), 12*length+1, fa);
-      fwrite(&convergence_grey, sizeof(char), 12*length+1, fa);
+      fwrite(&convergence_grey, sizeof(char), 12*length+1, fc);
 
       // We free the component of w, since it will never be used again.
       free(attractors[ix]);
@@ -499,8 +500,9 @@ main(int argc, char* argv[])
 {
 
   size_t length = 21;
-  const int nthrds = 1;
-  char degree = "1";
+  int nthrds = 1;
+  char degree = 1;
+  int c;
   
   while ((c = getopt (argc, argv, "tl:")) != -1)
     switch (c)
@@ -512,7 +514,7 @@ main(int argc, char* argv[])
         nthrds = strtol(optarg,NULL,10);
         break;
       case '?':
-        degree = optopt[0]; 
+        degree = optopt; 
         return 1;
       default:
         abort ();
@@ -559,10 +561,14 @@ main(int argc, char* argv[])
   }
 
   {
+    FILE* fa = fopen("newton_attractors_xd.ppm","w");
+    FILE* fc = fopen("newton_convergence_xd.ppm","w");
     thrd_info_write.attractors = attractors;
     thrd_info_write.convergences = convergences;
     thrd_info_write.length = length;
     thrd_info_write.nthrds = nthrds;
+    thrd_info_write.fa = fa;
+    thrd_info_write.fc = fc;
     thrd_info_write.mtx = &mtx;
     thrd_info_write.cnd = &cnd;
     // It is important that we have initialize status in the previous for-loop,
@@ -574,6 +580,9 @@ main(int argc, char* argv[])
       fprintf(stderr, "failed to create thread\n");
       exit(1);
     }
+
+  fclose(fa);
+  fclose(fc);
   }
 
   {
