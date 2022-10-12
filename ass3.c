@@ -13,6 +13,7 @@ typedef struct {
 typedef struct {
   char **attractors;
   size_t **convergences;
+  char degree;
   int ib;
   int istep;
   size_t length;
@@ -39,9 +40,10 @@ main_thrd_compute(
   void *args
   )
 {
-  const thrd_info_t *thrd_info = (thrd_info_t*) args;
-  const float **v = thrd_info->v;
-  float **w = thrd_info->w;
+  const thrd_info_compute_t *thrd_info = (thrd_info_t*) args;
+  char **attractors = thrd_info->attractors;
+  size_t **convergences = thrd_info->convergences;
+  char degree = thrd_info->degree;
   const int ib = thrd_info->ib;
   const int istep = thrd_info->istep;
   const int length = thrd_info->length;
@@ -51,15 +53,16 @@ main_thrd_compute(
   int_padded *status = thrd_info->status;
 
   for ( int ix = ib; ix < length; ix += istep ) {
-    const float *vix = v[ix];
     // We allocate the rows of the result before computing, and free them in another thread.
-    float *wix = (float*) malloc(length*sizeof(float));
+    char *attractor = (char*) malloc(length*sizeof(char));
+    size_t *convergence = (size_t*) malloc(length*sizeof(size_t));
     
     for ( int jx = 0; jx < length; ++jx )
-      wix[jx] = sqrtf(vix[jx]);
+      newton_iter(-2 + 4/(length-1)*ix,  2 - 4/(length-1)*jx, degree, &attractor[jx], &convergence[jx]);
     
      mtx_lock(mtx);
-     w[ix] = wix;
+     attractors[ix] = attractor;
+     convergences[ix] = convergence;
      status[tx].val = ix + istep;
      mtx_unlock(mtx);
      cnd_signal(cnd);
@@ -202,6 +205,7 @@ main(int argc, char* argv[])
   for ( int tx = 0; tx < nthrds; ++tx ) {
     thrds_info_compute[tx].attractors = attractors;
     thrds_info_compute[tx].convergences = convergences;
+    thrds_info_compute[tx].degree = degree;
     thrds_info_compute[tx].ib = tx;
     thrds_info_compute[tx].istep = nthrds;
     thrds_info_compute[tx].length = length;
