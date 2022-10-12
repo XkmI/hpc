@@ -6,6 +6,7 @@
 #include <complex.h>
 #include <unistd.h>
 
+#define ZEROCHARVAL 48
 #define TOLSQ 1e-6
 #define ABSSQ(zfl) (crealf(zfl)*crealf(zfl) + cimagf(zfl)*cimagf(zfl))
 
@@ -480,7 +481,7 @@ main_thrd_write(
     for ( ; ix < ibnd; ++ix ) {
       for(size_t jx = 0; jx < length; jx++) {
         conv_capped = convergences[ix][jx] > 99 ? 99 : convergences[ix][jx];
-        memcpy(&attractor_rgb[12*jx], rgbs[(short) attractors[ix][jx]], 12);
+        memcpy(&attractor_rgb[12*jx], rgbs[(short) attractors[ix][jx] - ZEROCHARVAL], 12);
         memcpy(&convergence_grey[12*jx], &greys[12*conv_capped], 12);
       }
       fwrite(&attractor_rgb, sizeof(char), 12*length+1, fa);
@@ -501,8 +502,8 @@ main(int argc, char* argv[])
 
   size_t length = 21;
   int nthrds = 1;
-  char degree = 1;
-  int c;
+  char degree = '1';
+  /* int c;
   
   while ((c = getopt (argc, argv, "tl:")) != -1)
     switch (c)
@@ -518,7 +519,7 @@ main(int argc, char* argv[])
         return 1;
       default:
         abort ();
-  }
+  } */
 
   char **attractors = (char**) malloc(length*sizeof(char*));
   size_t **convergences = (size_t**) malloc(length*sizeof(size_t*));
