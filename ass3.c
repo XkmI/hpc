@@ -9,7 +9,7 @@
 #define TOLSQ 1e-6
 #define ABSSQ(zfl) (crealf(zfl)*crealf(zfl) + cimagf(zfl)*cimagf(zfl))
 
-void newton_iter(const float re_z0, const float im_z0, const char degree, char *attr_indices, size_t *n_iter) {
+void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, char *attr_indices, size_t *n_iter) {
   float realdum, imagdum;
   complex float zDum;
   // Initial guess, initialize iteration counter
@@ -17,7 +17,7 @@ void newton_iter(const float re_z0, const float im_z0, const char degree, char *
   *n_iter = 0;
     
   // Commence spaghetti
-  switch (degree) {
+  switch (*degree_ptr) {
     case '1':
     *attr_indices = '0';
     zVal = (complex float) 1.;
@@ -394,7 +394,7 @@ main_thrd_compute(
     size_t *convergence = (size_t*) malloc(length*sizeof(size_t));
     
     for ( int jx = 0; jx < length; ++jx ) {
-      newton_iter(-2 + 4/((const float) length - 1)*ix,  2 - 4/((const float) length - 1)*jx, (const char) degree, &attractor[jx], &convergence[jx]);
+      newton_iter(-2 + 4/((const float) length - 1)*ix,  2 - 4/((const float) length - 1)*jx, (const char*) &degree, &attractor[jx], &convergence[jx]);
     
       mtx_lock(mtx);
       attractors[ix] = attractor;
