@@ -393,21 +393,26 @@ main_thrd_compute(
     // We allocate the rows of the result before computing, and free them in another thread.
     char *attractor = (char*) malloc(length*sizeof(char));
     size_t *convergence = (size_t*) malloc(length*sizeof(size_t));
+    attractors[ix] = (char*) malloc(length*sizeof(char));
+    convergences[ix] = (size_t*) malloc(length*sizeof(size_t));
     
     for ( int jx = 0; jx < length; ++jx ) {
       newton_iter(-2 + 4/((const float) length - 1)*ix,  2 - 4/((const float) length - 1)*jx, (const char*) &degree, &attractor[jx], &convergence[jx]);
-    
-      mtx_lock(mtx);
-      attractors[ix] = attractor;
-      convergences[ix] = convergence;
-      status[tx].val = ix + istep;
-      mtx_unlock(mtx);
-      cnd_signal(cnd);
-
-      // In order to illustrate thrd_sleep and to force more synchronization
-      // points, we sleep after each line for one micro second.
-      thrd_sleep(&(struct timespec){.tv_sec=0, .tv_nsec=1000}, NULL);
+      //fprintf(stderr, "attractor %s\n", attractor);
     }
+    
+    mtx_lock(mtx);
+    fprintf(stderr, "attractor %s\n", attractor);
+    attractors[ix] = attractor;
+    fprintf(stderr, "attractors[ix] %s\n", attractors[ix]);
+    convergences[ix] = convergence;
+    status[tx].val = ix + istep;
+    mtx_unlock(mtx);
+    cnd_signal(cnd);
+
+    // In order to illustrate thrd_sleep and to force more synchronization
+    // points, we sleep after each line for one micro second.
+    thrd_sleep(&(struct timespec){.tv_sec=0, .tv_nsec=1000}, NULL);
   }
   return 0;
 }
@@ -430,9 +435,9 @@ main_thrd_write(
 
   char attractor_rgb[length*12];
   char convergence_grey[length*12];
-  int conv_capped;
+  size_t conv_capped;
 
-  char greys[100*12];
+  char greys[100*12] = {'\0'};
   for(size_t kx = 0; kx < 100; ++kx){
     sprintf(&greys[kx*12], "%-4ld%-4ld%-4ld", kx, kx, kx);
   }
@@ -479,11 +484,18 @@ main_thrd_write(
 
     // We do not initialize ix in this loop, but in the outer one.
     for ( ; ix < ibnd; ++ix ) {
+    //fprintf(stderr, "1 writing until %i\n", ibnd);
       for(size_t jx = 0; jx < length; jx++) {
+        //fprintf(stderr, "2 writing until %i\n", ibnd);
         conv_capped = convergences[ix][jx] > 99 ? 99 : convergences[ix][jx];
-        memcpy(&attractor_rgb[12*jx], rgbs[(short) attractors[ix][jx] - ZEROCHARVAL], 12);
-        memcpy(&convergence_grey[12*jx], &greys[12*conv_capped], 12);
+        //fprintf(stderr, "attractor_rgb[12*(jx-1)] %c\n", attractor_rgb[12*(jx-1)]);
+        //fprintf(stderr, "attractors[ix][jx]%c\n", attractors[ix][jx]);
+        memcpy(&attractor_rgb[12*jx], rgbs[attractors[ix][jx]], 12);
+        //fprintf(stderr, "4 writing until %i\n", ibnd);
+        memcpy(&convergence_grey[12*jx], &greys[12*(int) conv_capped], 12);
+        //fprintf(stderr, "5 writing until %i\n", ibnd);
       }
+      fprintf(stderr, "attractor_rgb %s\n", attractor_rgb);
       fwrite(&attractor_rgb, sizeof(char), 12*length+1, fa);
       fwrite(&convergence_grey, sizeof(char), 12*length+1, fc);
 
@@ -502,7 +514,7 @@ main(int argc, char* argv[])
 
   size_t length = 21;
   int nthrds = 1;
-  char degree = '1';
+  char degree = '2';
   /* int c;
   
   while ((c = getopt (argc, argv, "tl:")) != -1)
@@ -564,6 +576,9 @@ main(int argc, char* argv[])
   {
     FILE* fa = fopen("newton_attractors_xd.ppm","w");
     FILE* fc = fopen("newton_convergence_xd.ppm","w");
+    fprintf(fa, "P3\n%ld %ld\n255", length, length);
+    fprintf(fc, "P3\n%ld %ld\n100", length, length);
+
     thrd_info_write.attractors = attractors;
     thrd_info_write.convergences = convergences;
     thrd_info_write.length = length;
@@ -591,8 +606,8 @@ main(int argc, char* argv[])
     thrd_join(thrd_write, &r);
   }
 
-  free(attractors);
-  free(convergences);
+  //free(attractors);
+  //free(convergences);
 
   mtx_destroy(&mtx);
   cnd_destroy(&cnd);
