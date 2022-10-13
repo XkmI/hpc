@@ -490,7 +490,7 @@ main_thrd_write(
         conv_capped = convergences[ix][jx] > 99 ? 99 : convergences[ix][jx];
         //fprintf(stderr, "attractor_rgb[12*(jx-1)] %c\n", attractor_rgb[12*(jx-1)]);
         //fprintf(stderr, "attractors[ix][jx]%c\n", attractors[ix][jx]);
-        memcpy(&attractor_rgb[12*jx], rgbs[attractors[ix][jx]], 12);
+        memcpy(&attractor_rgb[12*jx], rgbs[attractors[ix][jx] - ZEROCHARVAL], 12);
         //fprintf(stderr, "4 writing until %i\n", ibnd);
         memcpy(&convergence_grey[12*jx], &greys[12*(int) conv_capped], 12);
         //fprintf(stderr, "5 writing until %i\n", ibnd);
@@ -513,8 +513,8 @@ main(int argc, char* argv[])
 {
 
   size_t length = 21;
-  int nthrds = 1;
-  char degree = '2';
+  int nthrds = 5;
+  char degree = '3';
   /* int c;
   
   while ((c = getopt (argc, argv, "tl:")) != -1)
