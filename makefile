@@ -1,7 +1,7 @@
 PROGRAM = test newtonIter complexTest ass3
 CC = gcc
-CFLAGS = -O0 -Wall
-LIBS = -lpthread #-lm -lgsl -lgslcblas
+CFLAGS = -O0 -Wall -g
+LIBS = -lpthread -lm #-lgsl -lgslcblas
 
 .PHONY: all
 all: $(PROGRAM)
