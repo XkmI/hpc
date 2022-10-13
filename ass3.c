@@ -21,7 +21,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
   // Commence spaghetti
   switch (*degree_ptr) {
     case '1':
-    *attr_indices = '0';
+    *attr_indices = '1';
     zVal = (complex float) 1.;
     *n_iter = 1;
     break;
@@ -530,7 +530,7 @@ main(int argc, char* argv[])
   char degree = '3';
   int c;
   
-  while ((c = getopt (argc, argv, "tl:")) != -1)
+  while ((c = getopt (argc, argv, "t:l:")) != -1)
     switch (c)
       {
       case 'l':
@@ -540,11 +540,15 @@ main(int argc, char* argv[])
         nthrds = atoi(optarg);
         break;
       case '?':
+        fprintf(stderr, "case '?'\n");
         degree = optopt + '0'; 
+        printf("%d\n", optopt);
         break; 
       default:
       abort(); 
   } 
+  degree = *argv[argc-1];
+  //printf("%c\n", degree);
 
   char **attractors = (char**) malloc(length*sizeof(char*));
   size_t **convergences = (size_t**) malloc(length*sizeof(size_t*));
