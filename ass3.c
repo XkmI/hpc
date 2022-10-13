@@ -5,6 +5,7 @@
 #include <threads.h>
 #include <complex.h>
 #include <unistd.h>
+#include <getopt.h>
 
 #define ZEROCHARVAL 48
 #define TOLSQ 1e-6
@@ -337,7 +338,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
     // No further cases. Hyyyyyype.
 
   default:
-    fprintf(stderr, "unexpected degree\n");
+    //fprintf(stderr, "unexpected degree\n");
     exit(1);
   }
 }
@@ -365,8 +366,8 @@ typedef struct {
   size_t **convergences;
   size_t length;
   size_t nthrds;
-  FILE* fa;
-  FILE* fc;
+  //FILE* fa;
+  //FILE* fc;
   mtx_t *mtx;
   cnd_t *cnd;
   int_padded *status;
@@ -402,9 +403,9 @@ main_thrd_compute(
     }
     
     mtx_lock(mtx);
-    fprintf(stderr, "attractor %s\n", attractor);
+    //fprintf(stderr, "attractor %s\n", attractor);
     attractors[ix] = attractor;
-    fprintf(stderr, "attractors[ix] %s\n", attractors[ix]);
+    //fprintf(stderr, "attractors[ix] %s\n", attractors[ix]);
     convergences[ix] = convergence;
     status[tx].val = ix + istep;
     mtx_unlock(mtx);
@@ -427,11 +428,16 @@ main_thrd_write(
   size_t **convergences = thrd_info->convergences;
   size_t length = thrd_info->length;
   size_t nthrds= thrd_info->nthrds;
-  FILE* fa = thrd_info->fa;
-  FILE* fc = thrd_info->fc;
+  //FILE* fa = thrd_info->fa;
+  //FILE* fc = thrd_info->fc;
   mtx_t *mtx = thrd_info->mtx;
   cnd_t *cnd = thrd_info->cnd;
   int_padded *status = thrd_info->status;
+
+  FILE* fa = fopen("newton_attractors_xd.ppm","w");
+  FILE* fc = fopen("newton_convergence_xd.ppm","w");
+  fprintf(fa, "P3\n%ld %ld\n255\n", length, length);
+  fprintf(fc, "P3\n%ld %ld\n100\n", length, length);
 
   char attractor_rgb[length*12];
   char convergence_grey[length*12];
@@ -480,7 +486,7 @@ main_thrd_write(
       // specified time to the computation threads.
     }
 
-    fprintf(stderr, "writing until %i\n", ibnd);
+    //fprintf(stderr, "writing until %i\n", ibnd);
 
     // We do not initialize ix in this loop, but in the outer one.
     for ( ; ix < ibnd; ++ix ) {
@@ -495,15 +501,22 @@ main_thrd_write(
         memcpy(&convergence_grey[12*jx], &greys[12*(int) conv_capped], 12);
         //fprintf(stderr, "5 writing until %i\n", ibnd);
       }
-      fprintf(stderr, "attractor_rgb %s\n", attractor_rgb);
+      //fprintf(stderr, "attractor_rgb %s\n", attractor_rgb);
+      //size_t tmp = 
       fwrite(&attractor_rgb, sizeof(char), 12*length+1, fa);
+      fflush(fa);
+      //printf("written to file: %ld\n",tmp);
       fwrite(&convergence_grey, sizeof(char), 12*length+1, fc);
+      fflush(fc);
 
       // We free the component of w, since it will never be used again.
       free(attractors[ix]);
       free(convergences[ix]);
     }
   }
+
+  fclose(fa);
+  fclose(fc);
 
   return 0;
 }
@@ -515,23 +528,23 @@ main(int argc, char* argv[])
   size_t length = 21;
   int nthrds = 5;
   char degree = '3';
-  /* int c;
+  int c;
   
   while ((c = getopt (argc, argv, "tl:")) != -1)
     switch (c)
       {
       case 'l':
-        length = strtol(optarg,NULL,10);
+        length = atoi(optarg);
         break;
       case 't':
-        nthrds = strtol(optarg,NULL,10);
+        nthrds = atoi(optarg);
         break;
       case '?':
-        degree = optopt; 
-        return 1;
+        degree = optopt + '0'; 
+        break; 
       default:
-        abort ();
-  } */
+      abort(); 
+  } 
 
   char **attractors = (char**) malloc(length*sizeof(char*));
   size_t **convergences = (size_t**) malloc(length*sizeof(size_t*));
@@ -574,17 +587,17 @@ main(int argc, char* argv[])
   }
 
   {
-    FILE* fa = fopen("newton_attractors_xd.ppm","w");
-    FILE* fc = fopen("newton_convergence_xd.ppm","w");
-    fprintf(fa, "P3\n%ld %ld\n255", length, length);
-    fprintf(fc, "P3\n%ld %ld\n100", length, length);
+    //FILE* fa = fopen("newton_attractors_xd.ppm","w");
+    //FILE* fc = fopen("newton_convergence_xd.ppm","w");
+    //fprintf(fa, "P3\n%ld %ld\n255\n", length, length);
+    //fprintf(fc, "P3\n%ld %ld\n100\n", length, length);
 
     thrd_info_write.attractors = attractors;
     thrd_info_write.convergences = convergences;
     thrd_info_write.length = length;
     thrd_info_write.nthrds = nthrds;
-    thrd_info_write.fa = fa;
-    thrd_info_write.fc = fc;
+    //thrd_info_write.fa = fa;
+    //thrd_info_write.fc = fc;
     thrd_info_write.mtx = &mtx;
     thrd_info_write.cnd = &cnd;
     // It is important that we have initialize status in the previous for-loop,
@@ -597,8 +610,8 @@ main(int argc, char* argv[])
       exit(1);
     }
 
-  fclose(fa);
-  fclose(fc);
+  //fclose(fa);
+  //fclose(fc);
   }
 
   {
@@ -606,8 +619,8 @@ main(int argc, char* argv[])
     thrd_join(thrd_write, &r);
   }
 
-  //free(attractors);
-  //free(convergences);
+  free(attractors);
+  free(convergences);
 
   mtx_destroy(&mtx);
   cnd_destroy(&cnd);
