@@ -45,7 +45,7 @@ main()
 
   char *opencl_program_src;
   {
-    FILE *clfp = fopen("./dotprod_reduction.cl", "r");
+    FILE *clfp = fopen("./matmul.cl", "r");
     if ( clfp == NULL ) {
       fprintf(stderr, "could not load cl source code\n");
       return 1;
@@ -92,103 +92,75 @@ main()
     return 1;
   }
   
-  cl_kernel kernel_dot_prod_mul = clCreateKernel(program, "dot_prod_mul", &error);
+  cl_kernel kernel = clCreateKernel(program, "mat_mul", &error);
   if ( error != CL_SUCCESS ) {
-    fprintf(stderr, "cannot create kernel dot_prod_mul\n");
+    fprintf(stderr, "cannot create kernel\n");
     return 1;
   }
 
-  cl_kernel kernel_reduction = clCreateKernel(program, "reduction", &error);
-  if ( error != CL_SUCCESS ) {
-    fprintf(stderr, "cannot create kernel reduction\n");
-    return 1;
-  }
+  const int width_a = 10;
+  const int width_b = 10;
+  const int height_a = 10;
+  const int height_b = 10;
 
-  const int sz = 10000000;
-  const int global_redsz = 1024;
-  const int local_redsz = 32;
-  const int nmb_redgps = global_redsz / local_redsz;
-
-  cl_mem input_buffer_a, input_buffer_b, output_buffer_c, output_buffer_c_sum;
-  input_buffer_a = clCreateBuffer(context, CL_MEM_READ_ONLY, sz*sizeof(float), NULL, &error);
+  cl_mem input_buffer_a, input_buffer_b, output_buffer_c;
+  input_buffer_a = clCreateBuffer(context, CL_MEM_READ_ONLY,
+                       width_a*height_a * sizeof(float), NULL, &error);
   if ( error != CL_SUCCESS ) {
     fprintf(stderr, "cannot create buffer a\n");
     return 1;
   }
-  input_buffer_b = clCreateBuffer(context, CL_MEM_READ_ONLY, sz*sizeof(float), NULL, &error);
+  input_buffer_b = clCreateBuffer(context, CL_MEM_READ_ONLY,
+                       width_b*height_b * sizeof(float), NULL, &error);
   if ( error != CL_SUCCESS ) {
     fprintf(stderr, "cannot create buffer b\n");
     return 1;
   }
-  output_buffer_c = clCreateBuffer(context, CL_MEM_READ_WRITE, sz*sizeof(float), NULL, &error);
+  output_buffer_c = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
+                        width_b*height_a * sizeof(float), NULL, &error);
   if ( error != CL_SUCCESS ) {
     fprintf(stderr, "cannot create buffer c\n");
     return 1;
   }
-  output_buffer_c_sum = clCreateBuffer(context, CL_MEM_WRITE_ONLY, nmb_redgps*sizeof(float), NULL, &error);
-  if (error != CL_SUCCESS) {
-    fprintf(stderr, "cannot create buffer c_sum\n");
-    return 1;
-  }
 
-  float *a = malloc(sz*sizeof(float));
-  float *b = malloc(sz*sizeof(float));
-  for ( int ix = 0; ix < sz; ++ix ) {
+  float *a = malloc(width_a*height_a * sizeof(float));
+  float *b = malloc(width_b*height_b * sizeof(float));
+  for ( int ix = 0; ix < width_a*height_a; ++ix )
     a[ix] = ix;
+  for ( int ix = 0; ix < width_b*height_b; ++ix )
     b[ix] = ix;
-  }
+
   if ( clEnqueueWriteBuffer(command_queue,
-           input_buffer_a, CL_TRUE, 0, sz*sizeof(float), a, 0, NULL, NULL)
+           input_buffer_a, CL_TRUE, 0, width_a*height_a * sizeof(float), a, 0, NULL, NULL)
        != CL_SUCCESS ) {
     fprintf(stderr, "cannot enqueue write of buffer a\n");
     return 1;
   }
   if ( clEnqueueWriteBuffer(command_queue,
-           input_buffer_b, CL_TRUE, 0, sz*sizeof(float), b, 0, NULL, NULL)
+           input_buffer_b, CL_TRUE, 0, width_b*height_b * sizeof(float), b, 0, NULL, NULL)
        != CL_SUCCESS ) {
     fprintf(stderr, "cannot enqueue write of buffer b\n");
     return 1;
   }
-  clSetKernelArg(kernel_dot_prod_mul, 0, sizeof(cl_mem), &input_buffer_a);
-  clSetKernelArg(kernel_dot_prod_mul, 1, sizeof(cl_mem), &input_buffer_b);
-  clSetKernelArg(kernel_dot_prod_mul, 2, sizeof(cl_mem), &output_buffer_c);
+
+  clSetKernelArg(kernel, 0, sizeof(cl_mem), &input_buffer_a);
+  clSetKernelArg(kernel, 1, sizeof(cl_mem), &input_buffer_b);
+  clSetKernelArg(kernel, 2, sizeof(cl_mem), &output_buffer_c);
+  clSetKernelArg(kernel, 3, sizeof(int), &width_a);
+  clSetKernelArg(kernel, 4, sizeof(int), &width_b);
   
-  const size_t global_sz_szt = (size_t) sz;
-  if ( clEnqueueNDRangeKernel(command_queue, kernel_dot_prod_mul,
-           1, NULL, (const size_t*) &global_sz_szt, NULL, 0, NULL, NULL)
+  const size_t global_sz[] = {width_b, height_a};
+  if ( clEnqueueNDRangeKernel(command_queue, kernel,
+           2, NULL, (const size_t *) &global_sz, NULL, 0, NULL, NULL)
        != CL_SUCCESS ) {
-    fprintf(stderr, "cannot enqueue kernel dot_prod_mul\n");
+    fprintf(stderr, "cannot enqueue kernel\n");
     return 1;
   }
   
-  // This barrier appears only for the purpose of demonstration. We are working
-  // with and in-order command queue, so that it is implied by the enqueue
-  // commands.
-  if ( clEnqueueBarrierWithWaitList(command_queue, 0, NULL, NULL) != CL_SUCCESS ) {
-    printf("cannot enqueue barrier\n");
-    return 1;
-  }
-
-  const cl_int sz_clint = (cl_int)sz;
-  clSetKernelArg(kernel_reduction, 0, sizeof(cl_mem), &output_buffer_c);
-  clSetKernelArg(kernel_reduction, 1, local_redsz*sizeof(float), NULL);
-  clSetKernelArg(kernel_reduction, 2, sizeof(cl_int), &sz_clint);
-  clSetKernelArg(kernel_reduction, 3, sizeof(cl_mem), &output_buffer_c_sum);
-
-  size_t global_redsz_szt = (size_t) global_redsz;
-  size_t local_redsz_szt = (size_t) local_redsz;
-  if ( clEnqueueNDRangeKernel(command_queue,
-           kernel_reduction, 1, NULL, (const size_t *) &global_redsz_szt, (const size_t *) &local_redsz_szt,
-           0, NULL, NULL)
-      != CL_SUCCESS) {
-    fprintf(stderr, "cannot enqueue kernel reduction\n");
-    return 1;
-  }
-
-  float *c_sum = malloc(nmb_redgps*sizeof(float));
+  float *c = malloc(width_b*height_a * sizeof(float));
   if ( clEnqueueReadBuffer(command_queue,
-           output_buffer_c_sum, CL_TRUE, 0, nmb_redgps*sizeof(float), c_sum, 0, NULL, NULL)
-      != CL_SUCCESS) {
+           output_buffer_c, CL_TRUE, 0, width_b*height_a * sizeof(float), c, 0, NULL, NULL)
+       != CL_SUCCESS ) {
     fprintf(stderr, "cannot enqueue read of buffer c\n");
     return 1;
   }
@@ -197,26 +169,25 @@ main()
     fprintf(stderr, "cannot finish queue\n");
     return 1;
   }
+
+
+  for (size_t jx=0; jx<height_a; ++jx) {
+    for (size_t ix=0; ix<width_b; ++ix)
+      printf(" %5.f ", c[jx*width_b + ix]);
+    printf("\n");
+  }
   
 
-  float c_sum_total = 0.f;
-  for (size_t ix = 0; ix < nmb_redgps; ++ix)
-    c_sum_total += c_sum[ix];
-
-  printf("Dot product equals %f\n", c_sum_total);
-  
   free(a);
   free(b);
-  free(c_sum);
+  free(c);
 
   clReleaseMemObject(input_buffer_a);
   clReleaseMemObject(input_buffer_b);
   clReleaseMemObject(output_buffer_c);
-  clReleaseMemObject(output_buffer_c_sum);
 
   clReleaseProgram(program);
-  clReleaseKernel(kernel_dot_prod_mul);
-  clReleaseKernel(kernel_reduction);
+  clReleaseKernel(kernel);
 
   clReleaseCommandQueue(command_queue);
   clReleaseContext(context);
