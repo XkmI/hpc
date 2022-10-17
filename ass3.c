@@ -10,6 +10,7 @@
 #define ZEROCHARVAL 48
 #define TOLSQ 1e-6
 #define ABSSQ(zfl) (crealf(zfl)*crealf(zfl) + cimagf(zfl)*cimagf(zfl))
+#define CONV_MAX 50
 
 void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, char *attr_indices, size_t *n_iter) {
   float realdum, imagdum;
@@ -338,7 +339,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
     // No further cases. Hyyyyyype.
 
   default:
-    //fprintf(stderr, "unexpected degree\n");
+    fprintf(stderr, "unexpected degree\n");
     exit(1);
   }
 }
@@ -366,8 +367,6 @@ typedef struct {
   size_t **convergences;
   size_t length;
   size_t nthrds;
-  //FILE* fa;
-  //FILE* fc;
   mtx_t *mtx;
   cnd_t *cnd;
   int_padded *status;
@@ -399,13 +398,10 @@ main_thrd_compute(
     
     for ( int jx = 0; jx < length; ++jx ) {
       newton_iter(-2 + 4/((const float) length - 1)*ix,  2 - 4/((const float) length - 1)*jx, (const char*) &degree, &attractor[jx], &convergence[jx]);
-      //fprintf(stderr, "attractor %s\n", attractor);
     }
     
     mtx_lock(mtx);
-    //fprintf(stderr, "attractor %s\n", attractor);
     attractors[ix] = attractor;
-    //fprintf(stderr, "attractors[ix] %s\n", attractors[ix]);
     convergences[ix] = convergence;
     status[tx].val = ix + istep;
     mtx_unlock(mtx);
@@ -428,23 +424,23 @@ main_thrd_write(
   size_t **convergences = thrd_info->convergences;
   size_t length = thrd_info->length;
   size_t nthrds= thrd_info->nthrds;
-  //FILE* fa = thrd_info->fa;
-  //FILE* fc = thrd_info->fc;
   mtx_t *mtx = thrd_info->mtx;
   cnd_t *cnd = thrd_info->cnd;
   int_padded *status = thrd_info->status;
 
+  // opening files and writing headers
   FILE* fa = fopen("newton_attractors_xd.ppm","w");
   FILE* fc = fopen("newton_convergence_xd.ppm","w");
   fprintf(fa, "P3\n%ld %ld\n255\n", length, length);
-  fprintf(fc, "P3\n%ld %ld\n100\n", length, length);
+  fprintf(fc, "P3\n%ld %ld\n%d\n", length, length, CONV_MAX);
 
+  // arrays with rgb values - one with colours and the other in greyscale
   char attractor_rgb[length*12];
   char convergence_grey[length*12];
   size_t conv_capped;
 
-  char greys[100*12] = {'\0'};
-  for(size_t kx = 0; kx < 100; ++kx){
+  char greys[(CONV_MAX+1)*12] = {'\0'};
+  for(size_t kx = 0; kx < (CONV_MAX+1); ++kx){
     sprintf(&greys[kx*12], "%-4ld%-4ld%-4ld", kx, kx, kx);
   }
 
@@ -480,36 +476,23 @@ main_thrd_write(
         mtx_unlock(mtx);
         break;
       }
-
-      // Instead of employing a conditional variable, we could also invoke
-      // thrd_yield or thrd_sleep in order to yield to other threads or grant a
-      // specified time to the computation threads.
     }
-
-    //fprintf(stderr, "writing until %i\n", ibnd);
 
     // We do not initialize ix in this loop, but in the outer one.
     for ( ; ix < ibnd; ++ix ) {
-    //fprintf(stderr, "1 writing until %i\n", ibnd);
+      // converting the values of attractors and convergences to rgb (with a cap on convergences)
       for(size_t jx = 0; jx < length; jx++) {
-        //fprintf(stderr, "2 writing until %i\n", ibnd);
-        conv_capped = convergences[ix][jx] > 99 ? 99 : convergences[ix][jx];
-        //fprintf(stderr, "attractor_rgb[12*(jx-1)] %c\n", attractor_rgb[12*(jx-1)]);
-        //fprintf(stderr, "attractors[ix][jx]%c\n", attractors[ix][jx]);
+        conv_capped = convergences[ix][jx] > CONV_MAX ? CONV_MAX : convergences[ix][jx];
         memcpy(&attractor_rgb[12*jx], rgbs[attractors[ix][jx] - ZEROCHARVAL], 12);
-        //fprintf(stderr, "4 writing until %i\n", ibnd);
         memcpy(&convergence_grey[12*jx], &greys[12*(int) conv_capped], 12);
-        //fprintf(stderr, "5 writing until %i\n", ibnd);
       }
-      //fprintf(stderr, "attractor_rgb %s\n", attractor_rgb);
-      //size_t tmp = 
+
       fwrite(&attractor_rgb, sizeof(char), 12*length+1, fa);
       fflush(fa);
-      //printf("written to file: %ld\n",tmp);
       fwrite(&convergence_grey, sizeof(char), 12*length+1, fc);
       fflush(fc);
 
-      // We free the component of w, since it will never be used again.
+      // We free the components of attractors and convergences, since they will never be used again.
       free(attractors[ix]);
       free(convergences[ix]);
     }
@@ -525,11 +508,12 @@ int
 main(int argc, char* argv[])
 {
 
-  size_t length = 21;
-  int nthrds = 5;
-  char degree = '3';
+  size_t length;
+  int nthrds;
+  char degree; 
   int c;
   
+  // parsing command line options
   while ((c = getopt (argc, argv, "t:l:")) != -1)
     switch (c)
       {
@@ -540,20 +524,17 @@ main(int argc, char* argv[])
         nthrds = atoi(optarg);
         break;
       case '?':
-        fprintf(stderr, "case '?'\n");
-        degree = optopt + '0'; 
-        printf("%d\n", optopt);
-        break; 
+        fprintf(stderr, "Invalid argument\n");
+        exit(1); 
       default:
       abort(); 
   } 
   degree = *argv[argc-1];
-  //printf("%c\n", degree);
 
   char **attractors = (char**) malloc(length*sizeof(char*));
   size_t **convergences = (size_t**) malloc(length*sizeof(size_t*));
-  // The entries of w will be allocated in the computation threads are freed in
-  // the check thread.
+  // The entries of attractors and convergences will be allocated in the computation threads and are freed in
+  // the write thread.
 
   thrd_t thrds[nthrds];
   thrd_info_compute_t thrds_info_compute[nthrds];
@@ -591,17 +572,10 @@ main(int argc, char* argv[])
   }
 
   {
-    //FILE* fa = fopen("newton_attractors_xd.ppm","w");
-    //FILE* fc = fopen("newton_convergence_xd.ppm","w");
-    //fprintf(fa, "P3\n%ld %ld\n255\n", length, length);
-    //fprintf(fc, "P3\n%ld %ld\n100\n", length, length);
-
     thrd_info_write.attractors = attractors;
     thrd_info_write.convergences = convergences;
     thrd_info_write.length = length;
     thrd_info_write.nthrds = nthrds;
-    //thrd_info_write.fa = fa;
-    //thrd_info_write.fc = fc;
     thrd_info_write.mtx = &mtx;
     thrd_info_write.cnd = &cnd;
     // It is important that we have initialize status in the previous for-loop,
@@ -613,9 +587,6 @@ main(int argc, char* argv[])
       fprintf(stderr, "failed to create thread\n");
       exit(1);
     }
-
-  //fclose(fa);
-  //fclose(fc);
   }
 
   {
