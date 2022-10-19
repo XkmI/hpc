@@ -524,7 +524,9 @@ main_thrd_write(
       }
 
       fwrite(&attractor_rgb, sizeof(char), 12*length+1, fa);
+      fflush(fa);
       fwrite(&convergence_grey, sizeof(char), 12*length+1, fc);
+      fflush(fc);
 
       // We free the components of attractors and convergences, since they will never be used again.
       free(attractors[ix]);
@@ -532,9 +534,7 @@ main_thrd_write(
     }
   }
 
-  fflush(fa);
   fclose(fa);
-  fflush(fc);
   fclose(fc);
 
   return 0;
