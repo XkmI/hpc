@@ -8,7 +8,9 @@
 #include <getopt.h>
 
 #define ZEROCHARVAL 48
-#define TOLSQ 1e-6
+#define TOLSQ 1e-6f
+#define TOLX2 2e-3f
+#define TOLSQP1 1.000001f
 #define ABSSQ(zfl) (crealf(zfl)*crealf(zfl) + cimagf(zfl)*cimagf(zfl))
 #define CONV_MAX 50
 
@@ -22,325 +24,357 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
   // Commence spaghetti
   switch (*degree_ptr) {
     case '1':
-    *attr_indices = '1';
-    zVal = (complex float) 1.;
-    *n_iter = 1;
-    break;
+      *attr_indices = '1';
+      zVal = (complex float) 1.f;
+      *n_iter = 1;
+      break;
     case '2':
-    for (;;) {
-      realdum = fabsf(crealf(zVal));
-      imagdum = fabsf(cimagf(zVal));
-      if ((realdum > 1e10) || (imagdum > 1e10)) {
-        *attr_indices = '0';
-        break;
+      for (;;) {
+        realdum = fabsf(crealf(zVal));
+        imagdum = fabsf(cimagf(zVal));
+        if ((realdum > 1e10f) || (imagdum > 1e10f)) {
+          *attr_indices = '0';
+          break;
+        }
+        // Reuse realdum for magnitude squared of z
+        realdum = realdum*realdum + imagdum*imagdum;
+        if (realdum < TOLSQ) {
+          *attr_indices = '0';
+          break;
+        }
+        if (fabsf(realdum - TOLSQP1) < TOLX2) {
+          if (ABSSQ(zVal - 1.f) < TOLSQ) {
+            *attr_indices = '1';
+            break;
+          }
+          if (ABSSQ(zVal + 1.f) < TOLSQ) {
+            *attr_indices = '2';
+            break;
+          }
+        }
+        zVal = (zVal + 1.f/zVal)/2.f;
+        (*n_iter)++;
       }
-      if ((realdum*realdum + imagdum*imagdum < TOLSQ)) {
-        *attr_indices = '0';
-        break;
+      break;
+    case '3':
+      for (;;) {
+        realdum = fabsf(crealf(zVal));
+        imagdum = fabsf(cimagf(zVal));
+        if ((realdum > 1e10f) || (imagdum > 1e10f)) {
+          *attr_indices = '0';
+          break;
+        }
+        // Reuse realdum for magnitude squared of z
+        realdum = realdum*realdum + imagdum*imagdum;
+        if (realdum < TOLSQ) {
+          *attr_indices = '0';
+          break;
+        }
+        if (fabsf(realdum - TOLSQP1) < TOLX2) {
+          if (ABSSQ(zVal - 1.f) < TOLSQ) {
+            *attr_indices = '1';
+            break;
+          }
+          if (ABSSQ(zVal + (0.5f - 0.8660254037844386f*I)) < TOLSQ) {
+            *attr_indices = '2';
+            break;
+          }
+          if (ABSSQ(zVal + (0.5f + 0.8660254037844386f*I)) < TOLSQ) {
+            *attr_indices = '3';
+            break;
+          }
+        }
+        zVal = (2.f*zVal + 1.f/(zVal*zVal))/3.f;
+        (*n_iter)++;
       }
-      if (ABSSQ(zVal - 1.) < TOLSQ) {
-        *attr_indices = '1';
-        break;
+      break;
+    case '4':
+      for (;;) {
+        realdum = fabsf(crealf(zVal));
+        imagdum = fabsf(cimagf(zVal));
+        if ((realdum > 1e10f) || (imagdum > 1e10f)) {
+          *attr_indices = '0';
+          break;
+        }
+        // Reuse realdum for magnitude squared of z
+        realdum = realdum*realdum + imagdum*imagdum;
+        if (realdum < TOLSQ) {
+          *attr_indices = '0';
+          break;
+        }
+        if (fabsf(realdum - TOLSQP1) < TOLX2) {
+          if (ABSSQ(zVal - 1.f) < TOLSQ) {
+            *attr_indices = '1';
+            break;
+          }
+          if (ABSSQ(zVal - I) < TOLSQ) {
+            *attr_indices = '2';
+            break;
+          }
+          if (ABSSQ(zVal + 1.f) < TOLSQ) {
+            *attr_indices = '3';
+            break;
+          }
+          if (ABSSQ(zVal + I) < TOLSQ) {
+            *attr_indices = '4';
+            break;
+          }
+        }
+        zVal = (3.f*zVal + 1.f/(zVal*zVal*zVal))/4.f;
+        (*n_iter)++;
       }
-      if (ABSSQ(zVal + 1.) < TOLSQ) {
-        *attr_indices = '2';
-        break;
+      break;
+    case '5':
+      for (;;) {
+        realdum = fabsf(crealf(zVal));
+        imagdum = fabsf(cimagf(zVal));
+        if ((realdum > 1e10f) || (imagdum > 1e10f)) {
+          *attr_indices = '0';
+          break;
+        }
+        // Reuse realdum for magnitude squared of z
+        realdum = realdum*realdum + imagdum*imagdum;
+        if (realdum < TOLSQ) {
+          *attr_indices = '0';
+          break;
+        }
+        if (fabsf(realdum - TOLSQP1) < TOLX2) {
+          if (ABSSQ(zVal - 1.f) < TOLSQ) {
+            *attr_indices = '1';
+            break;
+          }
+          if (ABSSQ(zVal - (0.309016994374948f + 0.951056516295153f*I)) < TOLSQ) {
+            *attr_indices = '2';
+            break;
+          }
+          if (ABSSQ(zVal + 0.809016994374947f - 0.587785252292473f*I) < TOLSQ) {
+            *attr_indices = '3';
+            break;
+          }
+          if (ABSSQ(zVal + 0.809016994374947f + 0.587785252292473f*I) < TOLSQ) {
+            *attr_indices = '4';
+            break;
+          }
+          if (ABSSQ(zVal - 0.309016994374948f + 0.951056516295153f*I) < TOLSQ) {
+            *attr_indices = '5';
+            break;
+          }
+        }
+        zDum = zVal*zVal;
+        zVal = (4.f*zVal + 1.f/(zDum*zDum))/5.f;
+        (*n_iter)++;
       }
-      zVal = (zVal + 1./zVal)/2.;
-      (*n_iter)++;
-    }
-    break;
-  case '3':
-    for (;;) {
-      realdum = fabsf(crealf(zVal));
-      imagdum = fabsf(cimagf(zVal));
-      if ((realdum > 1e10) || (imagdum > 1e10)) {
-        *attr_indices = '0';
-        break;
+      break;
+    case '6':
+      for (;;) {
+        realdum = fabsf(crealf(zVal));
+        imagdum = fabsf(cimagf(zVal));
+        if ((realdum > 1e10f) || (imagdum > 1e10f)) {
+          *attr_indices = '0';
+          break;
+        }
+        // Reuse realdum for magnitude squared of z
+        realdum = realdum*realdum + imagdum*imagdum;
+        if (realdum < TOLSQ) {
+          *attr_indices = '0';
+          break;
+        }
+        if (fabsf(realdum - TOLSQP1) < TOLX2) {
+          if (ABSSQ(zVal - 1.f) < TOLSQ) {
+            *attr_indices = '1';
+            break;
+          }
+          if (ABSSQ(zVal - (0.5f + 0.8660254037844386f*I)) < TOLSQ) {
+            *attr_indices = '2';
+            break;
+          }
+          if (ABSSQ(zVal + 0.5f - 0.8660254037844386f*I) < TOLSQ) {
+            *attr_indices = '3';
+            break;
+          }
+          if (ABSSQ(zVal + 1.f) < TOLSQ) {
+            *attr_indices = '4';
+            break;
+          }
+          if (ABSSQ(zVal + 0.5f + 0.8660254037844386f*I) < TOLSQ) {
+            *attr_indices = '5';
+            break;
+          }
+          if (ABSSQ(zVal - 0.5f + 0.8660254037844386f*I) < TOLSQ) {
+            *attr_indices = '6';
+            break;
+          }
+        }
+        zDum = zVal*zVal;
+        zVal = (5.f*zVal + 1.f/(zDum*zDum*zVal))/6.f;
+        (*n_iter)++;
       }
-      if ((realdum*realdum + imagdum*imagdum < TOLSQ)) {
-        *attr_indices = '0';
-        break;
+      break;
+    case '7':
+      for (;;) {
+        realdum = fabsf(crealf(zVal));
+        imagdum = fabsf(cimagf(zVal));
+        if ((realdum > 1e10f) || (imagdum > 1e10f)) {
+          *attr_indices = '0';
+          break;
+        }
+        // Reuse realdum for magnitude squared of z
+        realdum = realdum*realdum + imagdum*imagdum;
+        if (realdum < TOLSQ) {
+          *attr_indices = '0';
+          break;
+        }
+        if (fabsf(realdum - TOLSQP1) < TOLX2) {
+          if (ABSSQ(zVal - 1.f) < TOLSQ) {
+            *attr_indices = '1';
+            break;
+          }
+          if (ABSSQ(zVal - (0.623489801858734f + 0.781831482468030f*I)) < TOLSQ) {
+            *attr_indices = '2';
+            break;
+          }
+          if (ABSSQ(zVal + 0.222520933956314f - 0.974927912181824f*I) < TOLSQ) {
+            *attr_indices = '3';
+            break;
+          }
+          if (ABSSQ(zVal + 0.900968867902419f - 0.433883739117558f*I) < TOLSQ) {
+            *attr_indices = '4';
+            break;
+          }
+          if (ABSSQ(zVal + 0.900968867902419f + 0.433883739117558f*I) < TOLSQ) {
+            *attr_indices = '5';
+            break;
+          }
+          if (ABSSQ(zVal + 0.222520933956314f + 0.974927912181824f*I) < TOLSQ) {
+            *attr_indices = '6';
+            break;
+          }
+          if (ABSSQ(zVal - 0.623489801858734f + 0.781831482468030f*I) < TOLSQ) {
+            *attr_indices = '7';
+            break;
+          }
+        }
+        zDum = zVal*zVal;
+        zVal = (6.f*zVal + 1.f/(zDum*zDum*zDum))/7.f;
+        (*n_iter)++;
       }
-      if (ABSSQ(zVal - 1.) < TOLSQ) {
-        *attr_indices = '1';
-        break;
+      break;
+    case '8':
+      for (;;) {
+        realdum = fabsf(crealf(zVal));
+        imagdum = fabsf(cimagf(zVal));
+        if ((realdum > 1e10f) || (imagdum > 1e10f)) {
+          *attr_indices = '0';
+          break;
+        }
+        // Reuse realdum for magnitude squared of z
+        realdum = realdum*realdum + imagdum*imagdum;
+        if (realdum < TOLSQ) {
+          *attr_indices = '0';
+          break;
+        }
+        if (fabsf(realdum - TOLSQP1) < TOLX2) {
+          if (ABSSQ(zVal - 1.f) < TOLSQ) {
+            *attr_indices = '1';
+            break;
+          }
+          if (ABSSQ(zVal - (0.707106781186548f + 0.707106781186547f*I)) < TOLSQ) {
+            *attr_indices = '2';
+            break;
+          }
+          if (ABSSQ(zVal - I) < TOLSQ) {
+            *attr_indices = '3';
+            break;
+          }
+          if (ABSSQ(zVal + 0.707106781186548f - 0.707106781186547f*I) < TOLSQ) {
+            *attr_indices = '4';
+            break;
+          }
+          if (ABSSQ(zVal + 1.f) < TOLSQ) {
+            *attr_indices = '5';
+            break;
+          }
+          if (ABSSQ(zVal + 0.707106781186548f + 0.707106781186547f*I) < TOLSQ) {
+            *attr_indices = '6';
+            break;
+          }
+          if (ABSSQ(zVal + I) < TOLSQ) {
+            *attr_indices = '7';
+            break;
+          }
+          if (ABSSQ(zVal - 0.707106781186548f + 0.707106781186547f*I) < TOLSQ) {
+            *attr_indices = '8';
+            break;
+          }
+        }
+        zDum = zVal*zVal;
+        zVal = (7.f*zVal + 1.f/(zDum*zDum*zDum*zVal))/8.f;
+        (*n_iter)++;
       }
-      if (ABSSQ(zVal + (0.5 - 0.8660254037844386*I)) < TOLSQ) {
-        *attr_indices = '2';
-        break;
+      break;
+    case '9':
+      for (;;) {
+        realdum = fabsf(crealf(zVal));
+        imagdum = fabsf(cimagf(zVal));
+        if ((realdum > 1e10f) || (imagdum > 1e10f)) {
+          *attr_indices = '0';
+          break;
+        }
+        // Reuse realdum for magnitude squared of z
+        realdum = realdum*realdum + imagdum*imagdum;
+        if (realdum < TOLSQ) {
+          *attr_indices = '0';
+          break;
+        }
+        if (fabsf(realdum - TOLSQP1) < TOLX2) {
+          if (ABSSQ(zVal - 1.f) < TOLSQ) {
+            *attr_indices = '1';
+            break;
+          }
+          if (ABSSQ(zVal - (0.766044443118978f + 0.642787609686539f*I)) < TOLSQ) {
+            *attr_indices = '2';
+            break;
+          }
+          if (ABSSQ(zVal - (0.173648177666930f + 0.984807753012208f*I)) < TOLSQ) {
+            *attr_indices = '3';
+            break;
+          }
+          if (ABSSQ(zVal + 0.500000000000000f - 0.866025403784439f*I) < TOLSQ) {
+            *attr_indices = '4';
+            break;
+          }
+          if (ABSSQ(zVal + 0.939692620785908f - 0.342020143325669f*I) < TOLSQ) {
+            *attr_indices = '5';
+            break;
+          }
+          if (ABSSQ(zVal + 0.939692620785908f + 0.342020143325669f*I) < TOLSQ) {
+            *attr_indices = '6';
+            break;
+          }
+          if (ABSSQ(zVal + 0.500000000000000f + 0.866025403784439f*I) < TOLSQ) {
+            *attr_indices = '7';
+            break;
+          }
+          if (ABSSQ(zVal - 0.173648177666930f + 0.984807753012208f*I) < TOLSQ) {
+            *attr_indices = '8';
+            break;
+          }
+          if (ABSSQ(zVal - 0.766044443118978f + 0.642787609686539f*I) < TOLSQ) {
+            *attr_indices = '9';
+            break;
+          }
+        }
+        zDum = zVal*zVal;
+        zDum *= zDum;
+        zVal = (8.f*zVal + 1.f/(zDum*zDum))/9.f;
+        (*n_iter)++;
       }
-      if (ABSSQ(zVal + (0.5 + 0.8660254037844386*I)) < TOLSQ) {
-        *attr_indices = '3';
-        break;
-      }
-      zVal = (2.*zVal + 1./(zVal*zVal))/3.;
-      (*n_iter)++;
-    }
-    break;
-  case '4':
-    for (;;) {
-      realdum = fabsf(crealf(zVal));
-      imagdum = fabsf(cimagf(zVal));
-      if ((realdum > 1e10) || (imagdum > 1e10)) {
-        *attr_indices = '0';
-        break;
-      }
-      if ((realdum*realdum + imagdum*imagdum < TOLSQ)) {
-        *attr_indices = '0';
-        break;
-      }
-      if (ABSSQ(zVal - 1.) < TOLSQ) {
-        *attr_indices = '1';
-        break;
-      }
-      if (ABSSQ(zVal - I) < TOLSQ) {
-        *attr_indices = '2';
-        break;
-      }
-      if (ABSSQ(zVal + 1.) < TOLSQ) {
-        *attr_indices = '3';
-        break;
-      }
-      if (ABSSQ(zVal + I) < TOLSQ) {
-        *attr_indices = '4';
-        break;
-      }
-      zVal = (3.*zVal + 1./(zVal*zVal*zVal))/4.;
-      (*n_iter)++;
-    }
-    break;
-  case '5':
-    for (;;) {
-      realdum = fabsf(crealf(zVal));
-      imagdum = fabsf(cimagf(zVal));
-      if ((realdum > 1e10) || (imagdum > 1e10)) {
-        *attr_indices = '0';
-        break;
-      }
-      if ((realdum*realdum + imagdum*imagdum < TOLSQ)) {
-        *attr_indices = '0';
-        break;
-      }
-      if (ABSSQ(zVal - 1.) < TOLSQ) {
-        *attr_indices = '1';
-        break;
-      }
-      if (ABSSQ(zVal - (0.309016994374948 + 0.951056516295153*I)) < TOLSQ) {
-        *attr_indices = '2';
-        break;
-      }
-      if (ABSSQ(zVal + 0.809016994374947 - 0.587785252292473*I) < TOLSQ) {
-        *attr_indices = '3';
-        break;
-      }
-      if (ABSSQ(zVal + 0.809016994374947 + 0.587785252292473*I) < TOLSQ) {
-        *attr_indices = '4';
-        break;
-      }
-      if (ABSSQ(zVal - 0.309016994374948 + 0.951056516295153*I) < TOLSQ) {
-        *attr_indices = '5';
-        break;
-      }
-      zDum = zVal*zVal;
-      zVal = (4.*zVal + 1./(zDum*zDum))/5.;
-      (*n_iter)++;
-    }
-    break;
-  case '6':
-    for (;;) {
-      realdum = fabsf(crealf(zVal));
-      imagdum = fabsf(cimagf(zVal));
-      if ((realdum > 1e10) || (imagdum > 1e10)) {
-        *attr_indices = '0';
-        break;
-      }
-      if ((realdum*realdum + imagdum*imagdum < TOLSQ)) {
-        *attr_indices = '0';
-        break;
-      }
-      if (ABSSQ(zVal - 1.) < TOLSQ) {
-        *attr_indices = '1';
-        break;
-      }
-      if (ABSSQ(zVal - (0.5 + 0.8660254037844386*I)) < TOLSQ) {
-        *attr_indices = '2';
-        break;
-      }
-      if (ABSSQ(zVal + 0.5 - 0.8660254037844386*I) < TOLSQ) {
-        *attr_indices = '3';
-        break;
-      }
-      if (ABSSQ(zVal + 1.) < TOLSQ) {
-        *attr_indices = '4';
-        break;
-      }
-      if (ABSSQ(zVal + 0.5 + 0.8660254037844386*I) < TOLSQ) {
-        *attr_indices = '5';
-        break;
-      }
-      if (ABSSQ(zVal - 0.5 + 0.8660254037844386*I) < TOLSQ) {
-        *attr_indices = '6';
-        break;
-      }
-      zDum = zVal*zVal;
-      zVal = (5.*zVal + 1./(zDum*zDum*zVal))/6.;
-      (*n_iter)++;
-    }
-    break;
-  case '7':
-    for (;;) {
-      realdum = fabsf(crealf(zVal));
-      imagdum = fabsf(cimagf(zVal));
-      if ((realdum > 1e10) || (imagdum > 1e10)) {
-        *attr_indices = '0';
-        break;
-      }
-      if ((realdum*realdum + imagdum*imagdum < TOLSQ)) {
-        *attr_indices = '0';
-        break;
-      }
-      if (ABSSQ(zVal - 1.) < TOLSQ) {
-        *attr_indices = '1';
-        break;
-      }
-      if (ABSSQ(zVal - (0.623489801858734 + 0.781831482468030*I)) < TOLSQ) {
-        *attr_indices = '2';
-        break;
-      }
-      if (ABSSQ(zVal + 0.222520933956314 - 0.974927912181824*I) < TOLSQ) {
-        *attr_indices = '3';
-        break;
-      }
-      if (ABSSQ(zVal + 0.900968867902419 - 0.433883739117558*I) < TOLSQ) {
-        *attr_indices = '4';
-        break;
-      }
-      if (ABSSQ(zVal + 0.900968867902419 + 0.433883739117558*I) < TOLSQ) {
-        *attr_indices = '5';
-        break;
-      }
-      if (ABSSQ(zVal + 0.222520933956314 + 0.974927912181824*I) < TOLSQ) {
-        *attr_indices = '6';
-        break;
-      }
-      if (ABSSQ(zVal - 0.623489801858734 + 0.781831482468030*I) < TOLSQ) {
-        *attr_indices = '7';
-        break;
-      }
-      zDum = zVal*zVal;
-      zVal = (6.*zVal + 1./(zDum*zDum*zDum))/7.;
-      (*n_iter)++;
-    }
-    break;
-  case '8':
-    for (;;) {
-      realdum = fabsf(crealf(zVal));
-      imagdum = fabsf(cimagf(zVal));
-      if ((realdum > 1e10) || (imagdum > 1e10)) {
-        *attr_indices = '0';
-        break;
-      }
-      if ((realdum*realdum + imagdum*imagdum < TOLSQ)) {
-        *attr_indices = '0';
-        break;
-      }
-      if (ABSSQ(zVal - 1.) < TOLSQ) {
-        *attr_indices = '1';
-        break;
-      }
-      if (ABSSQ(zVal - (0.707106781186548 + 0.707106781186547*I)) < TOLSQ) {
-        *attr_indices = '2';
-        break;
-      }
-      if (ABSSQ(zVal - I) < TOLSQ) {
-        *attr_indices = '3';
-        break;
-      }
-      if (ABSSQ(zVal + 0.707106781186548 - 0.707106781186547*I) < TOLSQ) {
-        *attr_indices = '4';
-        break;
-      }
-      if (ABSSQ(zVal + 1.) < TOLSQ) {
-        *attr_indices = '5';
-        break;
-      }
-      if (ABSSQ(zVal + 0.707106781186548 + 0.707106781186547*I) < TOLSQ) {
-        *attr_indices = '6';
-        break;
-      }
-      if (ABSSQ(zVal + I) < TOLSQ) {
-        *attr_indices = '7';
-        break;
-      }
-      if (ABSSQ(zVal - 0.707106781186548 + 0.707106781186547*I) < TOLSQ) {
-        *attr_indices = '8';
-        break;
-      }
-      zDum = zVal*zVal;
-      zVal = (7.*zVal + 1./(zDum*zDum*zDum*zVal))/8.;
-      (*n_iter)++;
-    }
-    break;
-  case '9':
-    for (;;) {
-      realdum = fabsf(crealf(zVal));
-      imagdum = fabsf(cimagf(zVal));
-      if ((realdum > 1e10) || (imagdum > 1e10)) {
-        *attr_indices = '0';
-        break;
-      }
-      if ((realdum*realdum + imagdum*imagdum < TOLSQ)) {
-        *attr_indices = '0';
-        break;
-      }
-      if (ABSSQ(zVal - 1.) < TOLSQ) {
-        *attr_indices = '1';
-        break;
-      }
-      if (ABSSQ(zVal - (0.766044443118978 + 0.642787609686539*I)) < TOLSQ) {
-        *attr_indices = '2';
-        break;
-      }
-      if (ABSSQ(zVal - (0.173648177666930 + 0.984807753012208*I)) < TOLSQ) {
-        *attr_indices = '3';
-        break;
-      }
-      if (ABSSQ(zVal + 0.500000000000000 - 0.866025403784439*I) < TOLSQ) {
-        *attr_indices = '4';
-        break;
-      }
-      if (ABSSQ(zVal + 0.939692620785908 - 0.342020143325669*I) < TOLSQ) {
-        *attr_indices = '5';
-        break;
-      }
-      if (ABSSQ(zVal + 0.939692620785908 + 0.342020143325669*I) < TOLSQ) {
-        *attr_indices = '6';
-        break;
-      }
-      if (ABSSQ(zVal + 0.500000000000000 + 0.866025403784439*I) < TOLSQ) {
-        *attr_indices = '7';
-        break;
-      }
-      if (ABSSQ(zVal - 0.173648177666930 + 0.984807753012208*I) < TOLSQ) {
-        *attr_indices = '8';
-        break;
-      }
-      if (ABSSQ(zVal - 0.766044443118978 + 0.642787609686539*I) < TOLSQ) {
-        *attr_indices = '9';
-        break;
-      }
-      zDum = zVal*zVal;
-      zDum *= zDum;
-      zVal = (8.*zVal + 1./(zDum*zDum))/9.;
-      (*n_iter)++;
-    }
-    break;
+      break;
     // No further cases. Hyyyyyype.
 
-  default:
-    fprintf(stderr, "unexpected degree\n");
-    exit(1);
+    default:
+      fprintf(stderr, "unexpected degree\n");
+      exit(1);
   }
 }
 
