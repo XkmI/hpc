@@ -31,8 +31,7 @@ void newton_iter(const double re_z0, const double im_z0, const char *degree_ptr,
     case '2':
       for (;;) {
         realdum = fabs(creal(zVal));
-        imagdum = fabs(cimag
-        (zVal));
+        imagdum = fabs(cimag(zVal));
         if ((realdum > 1e10) || (imagdum > 1e10)) {
           *attr_indices = '0';
           break;
@@ -58,8 +57,7 @@ void newton_iter(const double re_z0, const double im_z0, const char *degree_ptr,
     case '3':
       for (;;) {
         realdum = fabs(creal(zVal));
-        imagdum = fabs(cimag
-        (zVal));
+        imagdum = fabs(cimag(zVal));
         if ((realdum > 1e10) || (imagdum > 1e10)) {
           *attr_indices = '0';
           break;
@@ -90,8 +88,7 @@ void newton_iter(const double re_z0, const double im_z0, const char *degree_ptr,
     case '4':
       for (;;) {
         realdum = fabs(creal(zVal));
-        imagdum = fabs(cimag
-        (zVal));
+        imagdum = fabs(cimag(zVal));
         if ((realdum > 1e10) || (imagdum > 1e10)) {
           *attr_indices = '0';
           break;
@@ -126,8 +123,7 @@ void newton_iter(const double re_z0, const double im_z0, const char *degree_ptr,
     case '5':
       for (;;) {
         realdum = fabs(creal(zVal));
-        imagdum = fabs(cimag
-        (zVal));
+        imagdum = fabs(cimag(zVal));
         if ((realdum > 1e10) || (imagdum > 1e10)) {
           *attr_indices = '0';
           break;
@@ -167,8 +163,7 @@ void newton_iter(const double re_z0, const double im_z0, const char *degree_ptr,
     case '6':
       for (;;) {
         realdum = fabs(creal(zVal));
-        imagdum = fabs(cimag
-        (zVal));
+        imagdum = fabs(cimag(zVal));
         if ((realdum > 1e10) || (imagdum > 1e10)) {
           *attr_indices = '0';
           break;
@@ -211,8 +206,7 @@ void newton_iter(const double re_z0, const double im_z0, const char *degree_ptr,
     case '7':
       for (;;) {
         realdum = fabs(creal(zVal));
-        imagdum = fabs(cimag
-        (zVal));
+        imagdum = fabs(cimag(zVal));
         if ((realdum > 1e10) || (imagdum > 1e10)) {
           *attr_indices = '0';
           break;
@@ -259,8 +253,7 @@ void newton_iter(const double re_z0, const double im_z0, const char *degree_ptr,
     case '8':
       for (;;) {
         realdum = fabs(creal(zVal));
-        imagdum = fabs(cimag
-        (zVal));
+        imagdum = fabs(cimag(zVal));
         if ((realdum > 1e10) || (imagdum > 1e10)) {
           *attr_indices = '0';
           break;
@@ -312,8 +305,7 @@ void newton_iter(const double re_z0, const double im_z0, const char *degree_ptr,
     case '9':
       for (;;) {
         realdum = fabs(creal(zVal));
-        imagdum = fabs(cimag
-        (zVal));
+        imagdum = fabs(cimag(zVal));
         if ((realdum > 1e10) || (imagdum > 1e10)) {
           *attr_indices = '0';
           break;
