@@ -556,7 +556,7 @@ main(int argc, char* argv[])
     fwrite(&attractor_rgb, sizeof(char), 12*length*length+1, fa);
     fflush(fa);
     fclose(fa);
-    fwrite(&convergence_grey, sizeof(char), 12*length*length+1, fc);
+    fwrite(&convergence_grey, sizeof(char), 6*length*length+1, fc);
     fflush(fc);
     fclose(fc);
 
