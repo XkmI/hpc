@@ -11,28 +11,29 @@
 #define TOLSQ 1e-6
 #define TOLX2 2e-3
 #define TOLSQP1 1.000001
-#define ABSSQ(zfl) (crealf(zfl)*crealf(zfl) + cimagf(zfl)*cimagf(zfl))
+#define ABSSQ(zfl) (creal(zfl)*creal(zfl) + cimag(zfl)*cimag(zfl))
 #define CONV_MAX 50
 
-void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, char *attr_indices, size_t *n_iter) {
-  float realdum, imagdum;
-  complex float zDum;
+void newton_iter(const double re_z0, const double im_z0, const char *degree_ptr, char *attr_indices, size_t *n_iter) {
+  double realdum, imagdum;
+  complex double zDum;
   // Initial guess, initialize iteration counter
-  complex float zVal = re_z0 + im_z0*I;
+  complex double zVal = re_z0 + im_z0*I;
   *n_iter = 0;
     
   // Commence spaghetti
   switch (*degree_ptr) {
     case '1':
       *attr_indices = '1';
-      zVal = (complex float) 1.f;
+      zVal = (complex double) 1.;
       *n_iter = 1;
       break;
     case '2':
       for (;;) {
-        realdum = fabsf(crealf(zVal));
-        imagdum = fabsf(cimagf(zVal));
-        if ((realdum > 1e10f) || (imagdum > 1e10f)) {
+        realdum = fabs(creal(zVal));
+        imagdum = fabs(cimag
+        (zVal));
+        if ((realdum > 1e10) || (imagdum > 1e10)) {
           *attr_indices = '0';
           break;
         }
@@ -40,12 +41,12 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
           *attr_indices = '0';
           break;
         }
-        if (ABSSQ(zVal*zVal - 1.f) < 4e-6) {
-          if (ABSSQ(zVal - 1.f) < TOLSQ) {
+        if (ABSSQ(zVal*zVal - 1.) < 4e-6) {
+          if (ABSSQ(zVal - 1.) < TOLSQ) {
             *attr_indices = '1';
             break;
           }
-          if (ABSSQ(zVal + 1.f) < TOLSQ) {
+          if (ABSSQ(zVal + 1.) < TOLSQ) {
             *attr_indices = '2';
             break;
           }
@@ -56,9 +57,10 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
       break;
     case '3':
       for (;;) {
-        realdum = fabsf(crealf(zVal));
-        imagdum = fabsf(cimagf(zVal));
-        if ((realdum > 1e10f) || (imagdum > 1e10f)) {
+        realdum = fabs(creal(zVal));
+        imagdum = fabs(cimag
+        (zVal));
+        if ((realdum > 1e10) || (imagdum > 1e10)) {
           *attr_indices = '0';
           break;
         }
@@ -67,16 +69,16 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
           break;
         }
         zDum = zVal*zVal;
-        if (ABSSQ(zDum*zVal - 1.f) < 1.6e-5) {
-          if (ABSSQ(zVal - 1.f) < TOLSQ) {
+        if (ABSSQ(zDum*zVal - 1.) < 1.6e-5) {
+          if (ABSSQ(zVal - 1.) < TOLSQ) {
             *attr_indices = '1';
             break;
           }
-          if (ABSSQ(zVal + (0.5f - 0.8660254037844386f*I)) < TOLSQ) {
+          if (ABSSQ(zVal + (0.5 - 0.8660254037844386*I)) < TOLSQ) {
             *attr_indices = '2';
             break;
           }
-          if (ABSSQ(zVal + (0.5f + 0.8660254037844386f*I)) < TOLSQ) {
+          if (ABSSQ(zVal + (0.5 + 0.8660254037844386*I)) < TOLSQ) {
             *attr_indices = '3';
             break;
           }
@@ -87,9 +89,10 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
       break;
     case '4':
       for (;;) {
-        realdum = fabsf(crealf(zVal));
-        imagdum = fabsf(cimagf(zVal));
-        if ((realdum > 1e10f) || (imagdum > 1e10f)) {
+        realdum = fabs(creal(zVal));
+        imagdum = fabs(cimag
+        (zVal));
+        if ((realdum > 1e10) || (imagdum > 1e10)) {
           *attr_indices = '0';
           break;
         }
@@ -98,8 +101,8 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
           break;
         }
         zDum = zVal*zVal;
-        if (ABSSQ(zDum*zDum - 1.f) < 6.4e-5) {
-          if (ABSSQ(zVal - 1.f) < TOLSQ) {
+        if (ABSSQ(zDum*zDum - 1.) < 6.4e-5) {
+          if (ABSSQ(zVal - 1.) < TOLSQ) {
             *attr_indices = '1';
             break;
           }
@@ -107,7 +110,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
             *attr_indices = '2';
             break;
           }
-          if (ABSSQ(zVal + 1.f) < TOLSQ) {
+          if (ABSSQ(zVal + 1.) < TOLSQ) {
             *attr_indices = '3';
             break;
           }
@@ -122,9 +125,10 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
       break;
     case '5':
       for (;;) {
-        realdum = fabsf(crealf(zVal));
-        imagdum = fabsf(cimagf(zVal));
-        if ((realdum > 1e10f) || (imagdum > 1e10f)) {
+        realdum = fabs(creal(zVal));
+        imagdum = fabs(cimag
+        (zVal));
+        if ((realdum > 1e10) || (imagdum > 1e10)) {
           *attr_indices = '0';
           break;
         }
@@ -134,24 +138,24 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
         }
         zDum = zVal*zVal;
         zDum *= zDum;
-        if (ABSSQ(zDum*zVal - 1.f) < 2.56e-4) {
-          if (ABSSQ(zVal - 1.f) < TOLSQ) {
+        if (ABSSQ(zDum*zVal - 1.) < 2.56e-4) {
+          if (ABSSQ(zVal - 1.) < TOLSQ) {
             *attr_indices = '1';
             break;
           }
-          if (ABSSQ(zVal - (0.309016994374948f + 0.951056516295153f*I)) < TOLSQ) {
+          if (ABSSQ(zVal - (0.309016994374948 + 0.951056516295153*I)) < TOLSQ) {
             *attr_indices = '2';
             break;
           }
-          if (ABSSQ(zVal + 0.809016994374947f - 0.587785252292473f*I) < TOLSQ) {
+          if (ABSSQ(zVal + 0.809016994374947 - 0.587785252292473*I) < TOLSQ) {
             *attr_indices = '3';
             break;
           }
-          if (ABSSQ(zVal + 0.809016994374947f + 0.587785252292473f*I) < TOLSQ) {
+          if (ABSSQ(zVal + 0.809016994374947 + 0.587785252292473*I) < TOLSQ) {
             *attr_indices = '4';
             break;
           }
-          if (ABSSQ(zVal - 0.309016994374948f + 0.951056516295153f*I) < TOLSQ) {
+          if (ABSSQ(zVal - 0.309016994374948 + 0.951056516295153*I) < TOLSQ) {
             *attr_indices = '5';
             break;
           }
@@ -162,9 +166,10 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
       break;
     case '6':
       for (;;) {
-        realdum = fabsf(crealf(zVal));
-        imagdum = fabsf(cimagf(zVal));
-        if ((realdum > 1e10f) || (imagdum > 1e10f)) {
+        realdum = fabs(creal(zVal));
+        imagdum = fabs(cimag
+        (zVal));
+        if ((realdum > 1e10) || (imagdum > 1e10)) {
           *attr_indices = '0';
           break;
         }
@@ -173,28 +178,28 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
           break;
         }
         zDum = zVal*zVal*zVal;
-        if (ABSSQ(zDum*zDum - 1.f) < 1.024e-3) {
-          if (ABSSQ(zVal - 1.f) < TOLSQ) {
+        if (ABSSQ(zDum*zDum - 1.) < 1.024e-3) {
+          if (ABSSQ(zVal - 1.) < TOLSQ) {
             *attr_indices = '1';
             break;
           }
-          if (ABSSQ(zVal - (0.5f + 0.8660254037844386f*I)) < TOLSQ) {
+          if (ABSSQ(zVal - (0.5 + 0.8660254037844386*I)) < TOLSQ) {
             *attr_indices = '2';
             break;
           }
-          if (ABSSQ(zVal + 0.5f - 0.8660254037844386f*I) < TOLSQ) {
+          if (ABSSQ(zVal + 0.5 - 0.8660254037844386*I) < TOLSQ) {
             *attr_indices = '3';
             break;
           }
-          if (ABSSQ(zVal + 1.f) < TOLSQ) {
+          if (ABSSQ(zVal + 1.) < TOLSQ) {
             *attr_indices = '4';
             break;
           }
-          if (ABSSQ(zVal + 0.5f + 0.8660254037844386f*I) < TOLSQ) {
+          if (ABSSQ(zVal + 0.5 + 0.8660254037844386*I) < TOLSQ) {
             *attr_indices = '5';
             break;
           }
-          if (ABSSQ(zVal - 0.5f + 0.8660254037844386f*I) < TOLSQ) {
+          if (ABSSQ(zVal - 0.5 + 0.8660254037844386*I) < TOLSQ) {
             *attr_indices = '6';
             break;
           }
@@ -205,9 +210,10 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
       break;
     case '7':
       for (;;) {
-        realdum = fabsf(crealf(zVal));
-        imagdum = fabsf(cimagf(zVal));
-        if ((realdum > 1e10f) || (imagdum > 1e10f)) {
+        realdum = fabs(creal(zVal));
+        imagdum = fabs(cimag
+        (zVal));
+        if ((realdum > 1e10) || (imagdum > 1e10)) {
           *attr_indices = '0';
           break;
         }
@@ -216,32 +222,32 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
           break;
         }
         zDum = zVal*zVal*zVal;
-        if (ABSSQ(zDum*zDum*zVal - 1.f) < 4.096e-3) {
-          if (ABSSQ(zVal - 1.f) < TOLSQ) {
+        if (ABSSQ(zDum*zDum*zVal - 1.) < 4.096e-3) {
+          if (ABSSQ(zVal - 1.) < TOLSQ) {
             *attr_indices = '1';
             break;
           }
-          if (ABSSQ(zVal - (0.623489801858734f + 0.781831482468030f*I)) < TOLSQ) {
+          if (ABSSQ(zVal - (0.623489801858734 + 0.781831482468030*I)) < TOLSQ) {
             *attr_indices = '2';
             break;
           }
-          if (ABSSQ(zVal + 0.222520933956314f - 0.974927912181824f*I) < TOLSQ) {
+          if (ABSSQ(zVal + 0.222520933956314 - 0.974927912181824*I) < TOLSQ) {
             *attr_indices = '3';
             break;
           }
-          if (ABSSQ(zVal + 0.900968867902419f - 0.433883739117558f*I) < TOLSQ) {
+          if (ABSSQ(zVal + 0.900968867902419 - 0.433883739117558*I) < TOLSQ) {
             *attr_indices = '4';
             break;
           }
-          if (ABSSQ(zVal + 0.900968867902419f + 0.433883739117558f*I) < TOLSQ) {
+          if (ABSSQ(zVal + 0.900968867902419 + 0.433883739117558*I) < TOLSQ) {
             *attr_indices = '5';
             break;
           }
-          if (ABSSQ(zVal + 0.222520933956314f + 0.974927912181824f*I) < TOLSQ) {
+          if (ABSSQ(zVal + 0.222520933956314 + 0.974927912181824*I) < TOLSQ) {
             *attr_indices = '6';
             break;
           }
-          if (ABSSQ(zVal - 0.623489801858734f + 0.781831482468030f*I) < TOLSQ) {
+          if (ABSSQ(zVal - 0.623489801858734 + 0.781831482468030*I) < TOLSQ) {
             *attr_indices = '7';
             break;
           }
@@ -252,9 +258,10 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
       break;
     case '8':
       for (;;) {
-        realdum = fabsf(crealf(zVal));
-        imagdum = fabsf(cimagf(zVal));
-        if ((realdum > 1e10f) || (imagdum > 1e10f)) {
+        realdum = fabs(creal(zVal));
+        imagdum = fabs(cimag
+        (zVal));
+        if ((realdum > 1e10) || (imagdum > 1e10)) {
           *attr_indices = '0';
           break;
         }
@@ -264,12 +271,12 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
         }
         zDum = zVal*zVal;
         zDum *= zDum;
-        if (ABSSQ(zDum*zDum - 1.f) < 1.6384e-2) {
-          if (ABSSQ(zVal - 1.f) < TOLSQ) {
+        if (ABSSQ(zDum*zDum - 1.) < 1.6384e-2) {
+          if (ABSSQ(zVal - 1.) < TOLSQ) {
             *attr_indices = '1';
             break;
           }
-          if (ABSSQ(zVal - (0.707106781186548f + 0.707106781186547f*I)) < TOLSQ) {
+          if (ABSSQ(zVal - (0.707106781186548 + 0.707106781186547*I)) < TOLSQ) {
             *attr_indices = '2';
             break;
           }
@@ -277,15 +284,15 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
             *attr_indices = '3';
             break;
           }
-          if (ABSSQ(zVal + 0.707106781186548f - 0.707106781186547f*I) < TOLSQ) {
+          if (ABSSQ(zVal + 0.707106781186548 - 0.707106781186547*I) < TOLSQ) {
             *attr_indices = '4';
             break;
           }
-          if (ABSSQ(zVal + 1.f) < TOLSQ) {
+          if (ABSSQ(zVal + 1.) < TOLSQ) {
             *attr_indices = '5';
             break;
           }
-          if (ABSSQ(zVal + 0.707106781186548f + 0.707106781186547f*I) < TOLSQ) {
+          if (ABSSQ(zVal + 0.707106781186548 + 0.707106781186547*I) < TOLSQ) {
             *attr_indices = '6';
             break;
           }
@@ -293,7 +300,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
             *attr_indices = '7';
             break;
           }
-          if (ABSSQ(zVal - 0.707106781186548f + 0.707106781186547f*I) < TOLSQ) {
+          if (ABSSQ(zVal - 0.707106781186548 + 0.707106781186547*I) < TOLSQ) {
             *attr_indices = '8';
             break;
           }
@@ -304,9 +311,10 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
       break;
     case '9':
       for (;;) {
-        realdum = fabsf(crealf(zVal));
-        imagdum = fabsf(cimagf(zVal));
-        if ((realdum > 1e10f) || (imagdum > 1e10f)) {
+        realdum = fabs(creal(zVal));
+        imagdum = fabs(cimag
+        (zVal));
+        if ((realdum > 1e10) || (imagdum > 1e10)) {
           *attr_indices = '0';
           break;
         }
@@ -316,40 +324,40 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
         }
         zDum = zVal*zVal;
         zDum *= zDum;
-        if (ABSSQ(zDum*zDum*zVal - 1.f) < 6.5536e-2) {
-          if (ABSSQ(zVal - 1.f) < TOLSQ) {
+        if (ABSSQ(zDum*zDum*zVal - 1.) < 6.5536e-2) {
+          if (ABSSQ(zVal - 1.) < TOLSQ) {
             *attr_indices = '1';
             break;
           }
-          if (ABSSQ(zVal - (0.766044443118978f + 0.642787609686539f*I)) < TOLSQ) {
+          if (ABSSQ(zVal - (0.766044443118978 + 0.642787609686539*I)) < TOLSQ) {
             *attr_indices = '2';
             break;
           }
-          if (ABSSQ(zVal - (0.173648177666930f + 0.984807753012208f*I)) < TOLSQ) {
+          if (ABSSQ(zVal - (0.173648177666930 + 0.984807753012208*I)) < TOLSQ) {
             *attr_indices = '3';
             break;
           }
-          if (ABSSQ(zVal + 0.500000000000000f - 0.866025403784439f*I) < TOLSQ) {
+          if (ABSSQ(zVal + 0.500000000000000 - 0.866025403784439*I) < TOLSQ) {
             *attr_indices = '4';
             break;
           }
-          if (ABSSQ(zVal + 0.939692620785908f - 0.342020143325669f*I) < TOLSQ) {
+          if (ABSSQ(zVal + 0.939692620785908 - 0.342020143325669*I) < TOLSQ) {
             *attr_indices = '5';
             break;
           }
-          if (ABSSQ(zVal + 0.939692620785908f + 0.342020143325669f*I) < TOLSQ) {
+          if (ABSSQ(zVal + 0.939692620785908 + 0.342020143325669*I) < TOLSQ) {
             *attr_indices = '6';
             break;
           }
-          if (ABSSQ(zVal + 0.500000000000000f + 0.866025403784439f*I) < TOLSQ) {
+          if (ABSSQ(zVal + 0.500000000000000 + 0.866025403784439*I) < TOLSQ) {
             *attr_indices = '7';
             break;
           }
-          if (ABSSQ(zVal - 0.173648177666930f + 0.984807753012208f*I) < TOLSQ) {
+          if (ABSSQ(zVal - 0.173648177666930 + 0.984807753012208*I) < TOLSQ) {
             *attr_indices = '8';
             break;
           }
-          if (ABSSQ(zVal - 0.766044443118978f + 0.642787609686539f*I) < TOLSQ) {
+          if (ABSSQ(zVal - 0.766044443118978 + 0.642787609686539*I) < TOLSQ) {
             *attr_indices = '9';
             break;
           }
@@ -419,7 +427,7 @@ main_thrd_compute(
     convergences[ix] = (size_t*) malloc(length*sizeof(size_t));
     
     for ( int jx = 0; jx < length; ++jx ) {
-      newton_iter(-2 + 4/((const float) length - 1)*ix,  2 - 4/((const float) length - 1)*jx, (const char*) &degree, &attractor[jx], &convergence[jx]);
+      newton_iter(-2 + 4/((const double) length - 1)*ix,  2 - 4/((const double) length - 1)*jx, (const char*) &degree, &attractor[jx], &convergence[jx]);
     }
     
     mtx_lock(mtx);
