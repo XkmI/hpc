@@ -1,6 +1,6 @@
-PROGRAM = test newtonIter complexTest ass3
+PROGRAM = newton #test newtonIter complexTest ass3
 CC = gcc
-CFLAGS = -O0 -Wall#-g
+CFLAGS = -O2 -Wall#-g
 LIBS = -lpthread -lm -fcx-limited-range#-lgsl -lgslcblas
 
 .PHONY: all
@@ -12,4 +12,5 @@ $(PROGRAM) : %: %.c;
 .PHONY: clean
 clean:
 	rm -f *.o
+	rm -f *.ppm
 	rm -f $(PROGRAM)

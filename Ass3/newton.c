@@ -387,6 +387,8 @@ typedef struct {
 typedef struct {
   char **attractors;
   size_t **convergences;
+  FILE* fa;
+  FILE* fc;
   size_t length;
   size_t nthrds;
   mtx_t *mtx;
@@ -444,6 +446,8 @@ main_thrd_write(
   const thrd_info_write_t *thrd_info = (thrd_info_write_t*) args;
   char **attractors= thrd_info->attractors;
   size_t **convergences = thrd_info->convergences;
+  FILE* fa = thrd_info->fa;
+  FILE* fc = thrd_info->fc;
   size_t length = thrd_info->length;
   size_t nthrds= thrd_info->nthrds;
   mtx_t *mtx = thrd_info->mtx;
@@ -453,8 +457,8 @@ main_thrd_write(
   
 
   // opening files and writing headers
-  FILE* fa = fopen("newton_attractors_xd.ppm","w");
-  FILE* fc = fopen("newton_convergence_xd.ppm","w");
+  //FILE* fa = fopen("newton_attractors_xd.ppm","w");
+  //FILE* fc = fopen("newton_convergence_xd.ppm","w");
   fprintf(fa, "P3\n%ld %ld\n255\n", length, length);
   fprintf(fc, "P3\n%ld %ld\n%d\n", length, length, CONV_MAX);
 
@@ -560,8 +564,8 @@ main(int argc, char* argv[])
 
   // ...except in the case where we only have one thread anyway and d = 1:
   if (degree == '1' && nthrds == 1) {
-    FILE* fa = fopen("newton_attractors_xd.ppm","w");
-    FILE* fc = fopen("newton_convergence_xd.ppm","w");
+    FILE* fa = fopen("newton_attractors_x1.ppm","w");
+    FILE* fc = fopen("newton_convergence_x1.ppm","w");
     fprintf(fa, "P3\n%ld %ld\n255\n", length, length);
     fprintf(fc, "P3\n%ld %ld\n%d\n", length, length, CONV_MAX);
 
@@ -629,8 +633,17 @@ main(int argc, char* argv[])
   }
 
   {
+    char filename_a[26];
+    snprintf(filename_a, sizeof(filename_a), "newton_attractors_x%c.ppm", degree);
+    FILE* fa = fopen(filename_a,"w");
+    char filename_c[26];
+    snprintf(filename_c, sizeof(filename_c), "newton_convergence_x%c.ppm", degree);
+    FILE* fc = fopen(filename_c,"w");
+    //FILE* fc = fopen("newton_convergence_xd.ppm","w");
     thrd_info_write.attractors = attractors;
     thrd_info_write.convergences = convergences;
+    thrd_info_write.fa = fa;
+    thrd_info_write.fc = fc;
     thrd_info_write.length = length;
     thrd_info_write.nthrds = nthrds;
     thrd_info_write.mtx = &mtx;
