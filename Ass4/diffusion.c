@@ -5,7 +5,7 @@
 #include <CL/cl.h>
 
 int
-main()
+main(int argc, char* argv[])
 {
   cl_int error;
 
@@ -92,74 +92,88 @@ main()
     return 1;
   }
   
-  cl_kernel kernel = clCreateKernel(program, "mat_mul", &error);
+  cl_kernel kernel_diff = clCreateKernel(program, "diffusion", &error);
   if ( error != CL_SUCCESS ) {
-    fprintf(stderr, "cannot create kernel\n");
+    fprintf(stderr, "cannot create kernel_diff\n");
     return 1;
   }
 
-  const int width_a = 10;
-  const int width_b = 10;
-  const int height_a = 10;
-  const int height_b = 10;
+  size_t n_steps;
+  int diff_const;
+  int c;
 
-  cl_mem input_buffer_a, input_buffer_b, output_buffer_c;
-  input_buffer_a = clCreateBuffer(context, CL_MEM_READ_ONLY,
-                       width_a*height_a * sizeof(float), NULL, &error);
-  if ( error != CL_SUCCESS ) {
-    fprintf(stderr, "cannot create buffer a\n");
-    return 1;
-  }
-  input_buffer_b = clCreateBuffer(context, CL_MEM_READ_ONLY,
-                       width_b*height_b * sizeof(float), NULL, &error);
-  if ( error != CL_SUCCESS ) {
-    fprintf(stderr, "cannot create buffer b\n");
-    return 1;
-  }
-  output_buffer_c = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
-                        width_b*height_a * sizeof(float), NULL, &error);
-  if ( error != CL_SUCCESS ) {
-    fprintf(stderr, "cannot create buffer c\n");
-    return 1;
+  while((c = getopt(argc, argv, "n:d:")) !=-1){
+    switch(c){
+      case 'n':
+        n_steps = atoi(optarg);
+        break;
+      case 'd':
+        diff_const = atoi(optarg)
+        break;
+      case '?':
+        fprintf(stderr, "Invalid argumentn");
+        exit(1)
+      default:
+        abort();
+    }
   }
 
-  float *a = malloc(width_a*height_a * sizeof(float));
-  float *b = malloc(width_b*height_b * sizeof(float));
-  for ( int ix = 0; ix < width_a*height_a; ++ix )
-    a[ix] = ix;
-  for ( int ix = 0; ix < width_b*height_b; ++ix )
-    b[ix] = ix;
-
-  if ( clEnqueueWriteBuffer(command_queue,
-           input_buffer_a, CL_TRUE, 0, width_a*height_a * sizeof(float), a, 0, NULL, NULL)
-       != CL_SUCCESS ) {
-    fprintf(stderr, "cannot enqueue write of buffer a\n");
+  cl_mem input_buffer_h1, input_buffer_h2;
+  input_buffer_h1 = clCreateBuffer(context, CL_MEM_READ_WRITE,
+                       width*height * sizeof(float), NULL, &error);
+  if ( error != CL_SUCCESS ) {
+    fprintf(stderr, "cannot create buffer h1\n");
+    return 1;
+  }
+  input_buffer_h2 = clCreateBuffer(context, CL_MEM_READ_WRITE,
+                       width*height * sizeof(float), NULL, &error);
+  if ( error != CL_SUCCESS ) {
+    fprintf(stderr, "cannot create buffer h2\n");
     return 1;
   }
   if ( clEnqueueWriteBuffer(command_queue,
-           input_buffer_b, CL_TRUE, 0, width_b*height_b * sizeof(float), b, 0, NULL, NULL)
+           input_buffer_h1, CL_TRUE, 0, width*height * sizeof(float), a, 0, NULL, NULL)
        != CL_SUCCESS ) {
-    fprintf(stderr, "cannot enqueue write of buffer b\n");
+    fprintf(stderr, "cannot enqueue write of buffer h1\n");
+    return 1;
+  }
+  if ( clEnqueueWriteBuffer(command_queue,
+           input_buffer_h2, CL_TRUE, 0, width*height * sizeof(float), b, 0, NULL, NULL)
+       != CL_SUCCESS ) {
+    fprintf(stderr, "cannot enqueue write of buffer h2\n");
     return 1;
   }
 
-  clSetKernelArg(kernel, 0, sizeof(cl_mem), &input_buffer_a);
-  clSetKernelArg(kernel, 1, sizeof(cl_mem), &input_buffer_b);
-  clSetKernelArg(kernel, 2, sizeof(cl_mem), &output_buffer_c);
-  clSetKernelArg(kernel, 3, sizeof(int), &width_a);
-  clSetKernelArg(kernel, 4, sizeof(int), &width_b);
-  
-  const size_t global_sz[] = {width_b, height_a};
-  if ( clEnqueueNDRangeKernel(command_queue, kernel,
-           2, NULL, (const size_t *) &global_sz, NULL, 0, NULL, NULL)
-       != CL_SUCCESS ) {
-    fprintf(stderr, "cannot enqueue kernel\n");
-    return 1;
+  clSetKernelArg(kernel_diff, 0, sizeof(cl_mem), &input_buffer_h1);
+  clSetKernelArg(kernel_diff, 1, sizeof(cl_mem), &input_buffer_h2);
+    
+  const size_t global_sz[] = {height - 1, width - 1}; //excluding the borders !!!!!
+  const size_t local_sz[] = {10, 10};
+  cl_mem temp;
+  for(ix = 0; ix < nsteps; ix++){
+    if ( clEnqueueNDRangeKernel(command_queue, kernel_diff,
+             2, NULL, (const size_t *) &global_sz, &local_sz, 0, NULL, NULL)
+         != CL_SUCCESS ) {
+      fprintf(stderr, "cannot enqueue kernel_diff\n");
+      return 1;
+    }
+    temp = input_buffer_h1;
+    input_buffer_h1 = input_buffer_h2;
+    input_buffer_h2 = temp;
   }
+
+  // size_t local_redsz = 32;
+  // size_t nredgps = 
+  // const cl_int sz_clint = (clint) (height - 1) * (width - 1);
+  // clSetKernelArg(kernel_diff, 0, sizeof(cl_mem), &input_buffer_h1);
+  // clSetKernelArg(kernel_diff, 1, sizeof(cl_mem), &input_buffer_h1);
+  // clSetKernelArg(kernel_diff, 2, sizeof(cl_mem), &input_buffer_h1);
+  // clSetKernelArg(kernel_diff, 3, sizeof(cl_mem), &input_buffer_h1);
+
   
-  float *c = malloc(width_b*height_a * sizeof(float));
+  float *output = malloc(width*height * sizeof(float));
   if ( clEnqueueReadBuffer(command_queue,
-           output_buffer_c, CL_TRUE, 0, width_b*height_a * sizeof(float), c, 0, NULL, NULL)
+           input_buffer_h1, CL_TRUE, 0, width*height * sizeof(float), output, 0, NULL, NULL)
        != CL_SUCCESS ) {
     fprintf(stderr, "cannot enqueue read of buffer c\n");
     return 1;
@@ -170,27 +184,36 @@ main()
     return 1;
   }
 
+  free(h1);
+  free(h2);
 
-  for (size_t jx=0; jx<height_a; ++jx) {
-    for (size_t ix=0; ix<width_b; ++ix)
-      printf(" %5.f ", c[jx*width_b + ix]);
-    printf("\n");
+  double mean = 0;
+  for(size_t ix = 1; ix < height-1; ix++){
+    for(size_t jx = 1; jx width-1; jx++){
+      mean += output[ix*width + jx] /(double) (width*height); 
+    }
   }
-  
 
-  free(a);
-  free(b);
-  free(c);
+  double abs_diff_mean = 0;
+  for(size_t ix = 1; ix < height-1; ix++){
+    for(size_t jx = 1; jx width-1; jx++){
+      abs_diff_mean += fabs((output[ix*width + jx] - mean) /(double) (width*height)); 
+    }
+  }
 
-  clReleaseMemObject(input_buffer_a);
-  clReleaseMemObject(input_buffer_b);
-  clReleaseMemObject(output_buffer_c);
+  free(output);
+
+  clReleaseMemObject(input_buffer_h1);
+  clReleaseMemObject(input_buffer_h2);
 
   clReleaseProgram(program);
-  clReleaseKernel(kernel);
+  clReleaseKernel(kernel_diff);
 
   clReleaseCommandQueue(command_queue);
   clReleaseContext(context);
+
+  printf("%f\n", mean);
+  printf("%f\n", abs_diff_mean);
 
   return 0;
 }
