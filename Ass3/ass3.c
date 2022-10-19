@@ -537,27 +537,32 @@ main(int argc, char* argv[])
   // the write thread.
 
   // ...except in the case where we only have one thread anyway and d = 1:
-  if (degree == 1 && nthrds == 1) {
+  if (degree == '1' && nthrds == 1) {
     FILE* fa = fopen("newton_attractors_xd.ppm","w");
     FILE* fc = fopen("newton_convergence_xd.ppm","w");
     fprintf(fa, "P3\n%ld %ld\n255\n", length, length);
     fprintf(fc, "P3\n%ld %ld\n%d\n", length, length, CONV_MAX);
 
-    char attractor_rgb[length*length*12];
-    char convergence_grey[length*length*6];
+    char attractor_rgb[length*12];
+    char convergence_grey[length*6];
+
+    char* rgbs = "255 140   0 ";
+    char grey[7] = "1 1 1 ";
 
     //Create two file-sized arrays, then fwrite it all at once
-    for (size_t jx = 0; jx < length*length; ++jx) {
-      memcpy(&attractor_rgb[12*jx], "255 140   0 ", 12);
-      memcpy(&convergence_grey[6*jx], "1 1 1 ", 6);
+    //Or not...
+    for (size_t jx = 0; jx < length; ++jx) {
+      memcpy(&attractor_rgb[12*jx], rgbs, 12);
+      memcpy(&convergence_grey[6*jx], grey, 6);
     }
 
-    
-    fwrite(&attractor_rgb, sizeof(char), 12*length*length+1, fa);
-    fflush(fa);
+    for (size_t ix = 0; ix < length; ++ix) {
+      fwrite(&attractor_rgb, sizeof(char), 12*length+1, fa);
+      fflush(fa);
+      fwrite(&convergence_grey, sizeof(char), 6*length+1, fc);
+      fflush(fc);
+    }
     fclose(fa);
-    fwrite(&convergence_grey, sizeof(char), 6*length*length+1, fc);
-    fflush(fc);
     fclose(fc);
 
     return 0;
