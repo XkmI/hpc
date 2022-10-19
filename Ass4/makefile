@@ -14,4 +14,3 @@ $(PROGRAM) : %: %.c;
 clean:
 	rm -f *.o
 	rm -f $(PROGRAM)
-	touch *.c

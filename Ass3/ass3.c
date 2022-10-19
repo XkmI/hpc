@@ -428,6 +428,8 @@ main_thrd_write(
   cnd_t *cnd = thrd_info->cnd;
   int_padded *status = thrd_info->status;
 
+  
+
   // opening files and writing headers
   FILE* fa = fopen("newton_attractors_xd.ppm","w");
   FILE* fc = fopen("newton_convergence_xd.ppm","w");
@@ -531,10 +533,38 @@ main(int argc, char* argv[])
   } 
   degree = *argv[argc-1];
 
-  char **attractors = (char**) malloc(length*sizeof(char*));
-  size_t **convergences = (size_t**) malloc(length*sizeof(size_t*));
   // The entries of attractors and convergences will be allocated in the computation threads and are freed in
   // the write thread.
+
+  // ...except in the case where we only have one thread anyway and d = 1:
+  if (degree == 1 && nthrds == 1) {
+    FILE* fa = fopen("newton_attractors_xd.ppm","w");
+    FILE* fc = fopen("newton_convergence_xd.ppm","w");
+    fprintf(fa, "P3\n%ld %ld\n255\n", length, length);
+    fprintf(fc, "P3\n%ld %ld\n%d\n", length, length, CONV_MAX);
+
+    char attractor_rgb[length*length*12];
+    char convergence_grey[length*length*6];
+
+    //Create two file-sized arrays, then fwrite it all at once
+    for (size_t jx = 0; jx < length*length; ++jx) {
+      memcpy(&attractor_rgb[12*jx], "255 140   0 ", 12);
+      memcpy(&convergence_grey[6*jx], "1 1 1 ", 6);
+    }
+
+    
+    fwrite(&attractor_rgb, sizeof(char), 12*length*length+1, fa);
+    fflush(fa);
+    fclose(fa);
+    fwrite(&convergence_grey, sizeof(char), 12*length*length+1, fc);
+    fflush(fc);
+    fclose(fc);
+
+    return 0;
+  }
+  // Moved this down here since it isn't used if d=1 and we only have one thread.
+  char **attractors = (char**) malloc(length*sizeof(char*));
+  size_t **convergences = (size_t**) malloc(length*sizeof(size_t*));
 
   thrd_t thrds[nthrds];
   thrd_info_compute_t thrds_info_compute[nthrds];
