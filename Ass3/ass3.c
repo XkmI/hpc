@@ -36,13 +36,11 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
           *attr_indices = '0';
           break;
         }
-        // Reuse realdum for magnitude squared of z
-        realdum = realdum*realdum + imagdum*imagdum;
-        if (realdum < TOLSQ) {
+        if (realdum*realdum + imagdum*imagdum < TOLSQ) {
           *attr_indices = '0';
           break;
         }
-        if (fabsf(realdum - TOLSQP1) < TOLX2) {
+        if (ABSSQ(zVal*zVal - 1.f) < 4e-6) {
           if (ABSSQ(zVal - 1.f) < TOLSQ) {
             *attr_indices = '1';
             break;
@@ -64,13 +62,12 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
           *attr_indices = '0';
           break;
         }
-        // Reuse realdum for magnitude squared of z
-        realdum = realdum*realdum + imagdum*imagdum;
-        if (realdum < TOLSQ) {
+        if (realdum*realdum + imagdum*imagdum < TOLSQ) {
           *attr_indices = '0';
           break;
         }
-        if (fabsf(realdum - TOLSQP1) < TOLX2) {
+        zDum = zVal*zVal;
+        if (ABSSQ(zDum*zVal - 1.f) < 1.6e-5) {
           if (ABSSQ(zVal - 1.f) < TOLSQ) {
             *attr_indices = '1';
             break;
@@ -84,7 +81,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
             break;
           }
         }
-        zVal = (2.*zVal + 1./(zVal*zVal))/3.;
+        zVal = (2.*zVal + 1./zDum)/3.;
         (*n_iter)++;
       }
       break;
@@ -96,13 +93,12 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
           *attr_indices = '0';
           break;
         }
-        // Reuse realdum for magnitude squared of z
-        realdum = realdum*realdum + imagdum*imagdum;
-        if (realdum < TOLSQ) {
+        if (realdum*realdum + imagdum*imagdum < TOLSQ) {
           *attr_indices = '0';
           break;
         }
-        if (fabsf(realdum - TOLSQP1) < TOLX2) {
+        zDum = zVal*zVal;
+        if (ABSSQ(zDum*zDum - 1.f) < 6.4e-5) {
           if (ABSSQ(zVal - 1.f) < TOLSQ) {
             *attr_indices = '1';
             break;
@@ -120,7 +116,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
             break;
           }
         }
-        zVal = (3.*zVal + 1./(zVal*zVal*zVal))/4.;
+        zVal = (3.*zVal + 1./(zDum*zVal))/4.;
         (*n_iter)++;
       }
       break;
@@ -132,13 +128,13 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
           *attr_indices = '0';
           break;
         }
-        // Reuse realdum for magnitude squared of z
-        realdum = realdum*realdum + imagdum*imagdum;
-        if (realdum < TOLSQ) {
+        if (realdum*realdum + imagdum*imagdum < TOLSQ) {
           *attr_indices = '0';
           break;
         }
-        if (fabsf(realdum - TOLSQP1) < TOLX2) {
+        zDum = zVal*zVal;
+        zDum *= zDum;
+        if (ABSSQ(zDum*zVal - 1.f) < 2.56e-4) {
           if (ABSSQ(zVal - 1.f) < TOLSQ) {
             *attr_indices = '1';
             break;
@@ -160,8 +156,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
             break;
           }
         }
-        zDum = zVal*zVal;
-        zVal = (4.*zVal + 1./(zDum*zDum))/5.;
+        zVal = (4.*zVal + 1./zDum)/5.;
         (*n_iter)++;
       }
       break;
@@ -173,13 +168,12 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
           *attr_indices = '0';
           break;
         }
-        // Reuse realdum for magnitude squared of z
-        realdum = realdum*realdum + imagdum*imagdum;
-        if (realdum < TOLSQ) {
+        if (realdum*realdum + imagdum*imagdum < TOLSQ) {
           *attr_indices = '0';
           break;
         }
-        if (fabsf(realdum - TOLSQP1) < TOLX2) {
+        zDum = zVal*zVal*zVal;
+        if (ABSSQ(zDum*zDum - 1.f) < 1.024e-3) {
           if (ABSSQ(zVal - 1.f) < TOLSQ) {
             *attr_indices = '1';
             break;
@@ -205,8 +199,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
             break;
           }
         }
-        zDum = zVal*zVal;
-        zVal = (5.*zVal + 1./(zDum*zDum*zVal))/6.;
+        zVal = (5.*zVal + 1./(zDum*zVal*zVal))/6.;
         (*n_iter)++;
       }
       break;
@@ -218,13 +211,12 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
           *attr_indices = '0';
           break;
         }
-        // Reuse realdum for magnitude squared of z
-        realdum = realdum*realdum + imagdum*imagdum;
-        if (realdum < TOLSQ) {
+        if (realdum*realdum + imagdum*imagdum < TOLSQ) {
           *attr_indices = '0';
           break;
         }
-        if (fabsf(realdum - TOLSQP1) < TOLX2) {
+        zDum = zVal*zVal*zVal;
+        if (ABSSQ(zDum*zDum*zVal - 1.f) < 4.096e-3) {
           if (ABSSQ(zVal - 1.f) < TOLSQ) {
             *attr_indices = '1';
             break;
@@ -254,8 +246,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
             break;
           }
         }
-        zDum = zVal*zVal;
-        zVal = (6.*zVal + 1./(zDum*zDum*zDum))/7.;
+        zVal = (6.*zVal + 1./(zDum*zDum))/7.;
         (*n_iter)++;
       }
       break;
@@ -267,13 +258,13 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
           *attr_indices = '0';
           break;
         }
-        // Reuse realdum for magnitude squared of z
-        realdum = realdum*realdum + imagdum*imagdum;
-        if (realdum < TOLSQ) {
+        if (realdum*realdum + imagdum*imagdum < TOLSQ) {
           *attr_indices = '0';
           break;
         }
-        if (fabsf(realdum - TOLSQP1) < TOLX2) {
+        zDum = zVal*zVal;
+        zDum *= zDum;
+        if (ABSSQ(zDum*zDum - 1.f) < 1.6384e-2) {
           if (ABSSQ(zVal - 1.f) < TOLSQ) {
             *attr_indices = '1';
             break;
@@ -307,8 +298,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
             break;
           }
         }
-        zDum = zVal*zVal;
-        zVal = (7.*zVal + 1./(zDum*zDum*zDum*zVal))/8.;
+        zVal = (7.*zVal + 1./(zDum*zVal*zVal*zVal))/8.;
         (*n_iter)++;
       }
       break;
@@ -320,13 +310,13 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
           *attr_indices = '0';
           break;
         }
-        // Reuse realdum for magnitude squared of z
-        realdum = realdum*realdum + imagdum*imagdum;
-        if (realdum < TOLSQ) {
+        if (realdum*realdum + imagdum*imagdum < TOLSQ) {
           *attr_indices = '0';
           break;
         }
-        if (fabsf(realdum - TOLSQP1) < TOLX2) {
+        zDum = zVal*zVal;
+        zDum *= zDum;
+        if (ABSSQ(zDum*zDum*zVal - 1.f) < 6.5536e-2) {
           if (ABSSQ(zVal - 1.f) < TOLSQ) {
             *attr_indices = '1';
             break;
@@ -364,8 +354,6 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
             break;
           }
         }
-        zDum = zVal*zVal;
-        zDum *= zDum;
         zVal = (8.*zVal + 1./(zDum*zDum))/9.;
         (*n_iter)++;
       }
