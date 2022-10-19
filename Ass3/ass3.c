@@ -52,7 +52,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
             break;
           }
         }
-        zVal = (zVal + 1./zVal)/2.;
+        zVal = (zVal + 1./zVal)/2.f;
         (*n_iter)++;
       }
       break;
@@ -84,7 +84,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
             break;
           }
         }
-        zVal = (2.*zVal + 1./(zVal*zVal))/3.;
+        zVal = (2.f*zVal + 1./(zVal*zVal))/3.f;
         (*n_iter)++;
       }
       break;
@@ -120,7 +120,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
             break;
           }
         }
-        zVal = (3.*zVal + 1./(zVal*zVal*zVal))/4.;
+        zVal = (3.f*zVal + 1./(zVal*zVal*zVal))/4.f;
         (*n_iter)++;
       }
       break;
@@ -161,7 +161,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
           }
         }
         zDum = zVal*zVal;
-        zVal = (4.*zVal + 1./(zDum*zDum))/5.;
+        zVal = (4.f*zVal + 1./(zDum*zDum))/5.f;
         (*n_iter)++;
       }
       break;
@@ -206,7 +206,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
           }
         }
         zDum = zVal*zVal;
-        zVal = (5.*zVal + 1./(zDum*zDum*zVal))/6.;
+        zVal = (5.f*zVal + 1./(zDum*zDum*zVal))/6.f;
         (*n_iter)++;
       }
       break;
@@ -255,7 +255,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
           }
         }
         zDum = zVal*zVal;
-        zVal = (6.*zVal + 1./(zDum*zDum*zDum))/7.;
+        zVal = (6.f*zVal + 1./(zDum*zDum*zDum))/7.f;
         (*n_iter)++;
       }
       break;
@@ -308,7 +308,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
           }
         }
         zDum = zVal*zVal;
-        zVal = (7.*zVal + 1./(zDum*zDum*zDum*zVal))/8.;
+        zVal = (7.f*zVal + 1./(zDum*zDum*zDum*zVal))/8.f;
         (*n_iter)++;
       }
       break;
@@ -366,7 +366,7 @@ void newton_iter(const float re_z0, const float im_z0, const char *degree_ptr, c
         }
         zDum = zVal*zVal;
         zDum *= zDum;
-        zVal = (8.*zVal + 1./(zDum*zDum))/9.;
+        zVal = (8.f*zVal + 1./(zDum*zDum))/9.f;
         (*n_iter)++;
       }
       break;
