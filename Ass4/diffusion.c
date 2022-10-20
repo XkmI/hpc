@@ -2,9 +2,9 @@
 #include <stddef.h>
 #include <string.h>
 #include <math.h>
+#include <getopt.h>
 #define CL_TARGET_OPENCL_VERSION 300
 #include <CL/cl.h>
-#include <getopt.h>
 
 int
 main(int argc, char* argv[])
