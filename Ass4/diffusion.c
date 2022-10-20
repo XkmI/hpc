@@ -45,7 +45,7 @@ main(int argc, char* argv[])
 
   char *opencl_program_src;
   {
-    FILE *clfp = fopen("./matmul.cl", "r");
+    FILE *clfp = fopen("./fcn.cl", "r");
     if ( clfp == NULL ) {
       fprintf(stderr, "could not load cl source code\n");
       return 1;
