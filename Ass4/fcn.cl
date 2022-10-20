@@ -3,7 +3,7 @@ void
 diffusion(
     __global const float *old,
     __global float *new,
-    int diff_const,
+    float diff_const,
     )
 {
   int ix = get_global_id(0) + 1;

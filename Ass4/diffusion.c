@@ -4,6 +4,7 @@
 #include <math.h>
 #define CL_TARGET_OPENCL_VERSION 300
 #include <CL/cl.h>
+#include <getopt.h>
 
 int
 main(int argc, char* argv[])
@@ -100,7 +101,7 @@ main(int argc, char* argv[])
   }
 
   size_t n_steps;
-  int diff_const;
+  float diff_const;
   int c;
 
   while((c = getopt(argc, argv, "n:d:")) !=-1){
@@ -109,28 +110,14 @@ main(int argc, char* argv[])
         n_steps = atoi(optarg);
         break;
       case 'd':
-        diff_const = atoi(optarg)
+        diff_const = atoi(optarg);
         break;
       case '?':
         fprintf(stderr, "Invalid argumentn");
-        exit(1)
+        exit(1);
       default:
         abort();
     }
-  }
-
-  cl_mem input_buffer_h1, input_buffer_h2;
-  input_buffer_h1 = clCreateBuffer(context, CL_MEM_READ_WRITE,
-                       width*height * sizeof(float), NULL, &error);
-  if ( error != CL_SUCCESS ) {
-    fprintf(stderr, "cannot create buffer h1\n");
-    return 1;
-  }
-  input_buffer_h2 = clCreateBuffer(context, CL_MEM_READ_WRITE,
-                       width*height * sizeof(float), NULL, &error);
-  if ( error != CL_SUCCESS ) {
-    fprintf(stderr, "cannot create buffer h2\n");
-    return 1;
   }
 
   // Commence Gnocchi
@@ -182,6 +169,20 @@ main(int argc, char* argv[])
   }
   // End Gnocchi
 
+  cl_mem input_buffer_h1, input_buffer_h2;
+  input_buffer_h1 = clCreateBuffer(context, CL_MEM_READ_WRITE,
+                       width*height * sizeof(float), NULL, &error);
+  if ( error != CL_SUCCESS ) {
+    fprintf(stderr, "cannot create buffer h1\n");
+    return 1;
+  }
+  input_buffer_h2 = clCreateBuffer(context, CL_MEM_READ_WRITE,
+                       width*height * sizeof(float), NULL, &error);
+  if ( error != CL_SUCCESS ) {
+    fprintf(stderr, "cannot create buffer h2\n");
+    return 1;
+  }
+
   if ( clEnqueueWriteBuffer(command_queue,
            input_buffer_h1, CL_TRUE, 0, width*height * sizeof(float), h1, 0, NULL, NULL)
        != CL_SUCCESS ) {
@@ -199,9 +200,9 @@ main(int argc, char* argv[])
   clSetKernelArg(kernel_diff, 1, sizeof(cl_mem), &input_buffer_h2);
     
   const size_t global_sz[] = {height - 2lu, width - 2lu}; //excluding the borders !!!!!
-  const size_t local_sz[] = {10, 10};
+  const size_t local_sz[] = {10lu, 10lu};
   cl_mem temp;
-  for(ix = 0; ix < nsteps; ix++){
+  for(size_t ix = 0; ix < n_steps; ix++){
     if ( clEnqueueNDRangeKernel(command_queue, kernel_diff,
              2, NULL, (const size_t *) &global_sz, &local_sz, 0, NULL, NULL)
          != CL_SUCCESS ) {
