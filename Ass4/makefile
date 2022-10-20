@@ -1,4 +1,4 @@
-PROGRAM = matFromFile
+PROGRAM = matFromFile diffusion
 CC = gcc
 CFLAGS = -O2 -Wall #-g
 LIBS = -lOpenCL -lm #-lpthread -lgsl -lgslcblas
