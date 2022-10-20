@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
+#include <math.h>
 #define CL_TARGET_OPENCL_VERSION 300
 #include <CL/cl.h>
 
@@ -45,7 +46,7 @@ main(int argc, char* argv[])
 
   char *opencl_program_src;
   {
-    FILE *clfp = fopen("./matmul.cl", "r");
+    FILE *clfp = fopen("./fcn.cl", "r");
     if ( clfp == NULL ) {
       fprintf(stderr, "could not load cl source code\n");
       return 1;
@@ -131,14 +132,64 @@ main(int argc, char* argv[])
     fprintf(stderr, "cannot create buffer h2\n");
     return 1;
   }
+
+  // Commence Gnocchi
+  float* h1;
+  size_t width, height;
+  {
+    FILE* initfile = fopen("init","r");
+    if (initfile == NULL) {
+      perror("error:");
+      exit(1);
+    }
+
+    fseek(initfile,0,SEEK_END);
+    const size_t initfilesize = ftell(initfile)/sizeof(char);
+    fseek(initfile,0,SEEK_SET);
+
+    char* initfileStr = (char*) malloc(initfilesize*sizeof(char));
+    fread(initfileStr, sizeof(char), initfilesize, initfile);
+
+    fclose(initfile);
+
+    //printf ("Splitting string \"%s\" into tokens:\n",initfileStr);
+    char* tok; const char whitespace[3] = " \n";
+    height = strtoul(strtok(initfileStr, whitespace),NULL,10) + 2lu;
+    width = strtoul(strtok(NULL, whitespace),NULL,10) + 2lu;
+    //printf("Vi har %zu rader och %zu kolumner\n", nRows, nCols);
+
+    // Mallocation & initialisation of our h1 matrix
+    // Could 1000% be parallelised, but nah.
+    h1 = malloc(width*height*sizeof(float));
+    size_t ix;
+    for (ix = 0; ix < width*height; ix++) {
+      h1[ix] = 0.f;
+    }
+
+    // Misstänker att det finns nåt mindre ass sätt att göra detta på, men detta får duga tillsvidare.
+    // Dumping of file init into matrix h1 (with zero-padding).
+    size_t jx;
+    while ((tok = strtok(NULL, whitespace)) != NULL) {
+      ix = strtoul(tok, NULL, 10);
+      jx = strtoul(strtok(NULL, whitespace), NULL, 10);
+      h1[(ix+1)*width + (jx+1)] = strtof(strtok(NULL, whitespace), NULL);
+      //printf("Hello, (%zu,%zu) : %f\n", ix, jx, h1[(ix+1)*(nCols+2) + (jx+1)]);
+    }
+
+    //printf("Element (1,3) är nu %f\n", h1[2*(nCols+2)+4]);
+
+    free(initfileStr);
+  }
+  // End Gnocchi
+
   if ( clEnqueueWriteBuffer(command_queue,
-           input_buffer_h1, CL_TRUE, 0, width*height * sizeof(float), a, 0, NULL, NULL)
+           input_buffer_h1, CL_TRUE, 0, width*height * sizeof(float), h1, 0, NULL, NULL)
        != CL_SUCCESS ) {
     fprintf(stderr, "cannot enqueue write of buffer h1\n");
     return 1;
   }
   if ( clEnqueueWriteBuffer(command_queue,
-           input_buffer_h2, CL_TRUE, 0, width*height * sizeof(float), b, 0, NULL, NULL)
+           input_buffer_h2, CL_TRUE, 0, width*height * sizeof(float), h1, 0, NULL, NULL)
        != CL_SUCCESS ) {
     fprintf(stderr, "cannot enqueue write of buffer h2\n");
     return 1;
@@ -147,7 +198,7 @@ main(int argc, char* argv[])
   clSetKernelArg(kernel_diff, 0, sizeof(cl_mem), &input_buffer_h1);
   clSetKernelArg(kernel_diff, 1, sizeof(cl_mem), &input_buffer_h2);
     
-  const size_t global_sz[] = {height - 1, width - 1}; //excluding the borders !!!!!
+  const size_t global_sz[] = {height - 2lu, width - 2lu}; //excluding the borders !!!!!
   const size_t local_sz[] = {10, 10};
   cl_mem temp;
   for(ix = 0; ix < nsteps; ix++){
@@ -170,10 +221,10 @@ main(int argc, char* argv[])
   // clSetKernelArg(kernel_diff, 2, sizeof(cl_mem), &input_buffer_h1);
   // clSetKernelArg(kernel_diff, 3, sizeof(cl_mem), &input_buffer_h1);
 
-  
-  float *output = malloc(width*height * sizeof(float));
+  // Reuse h1 as output
+  //float *output = malloc(width*height * sizeof(float));
   if ( clEnqueueReadBuffer(command_queue,
-           input_buffer_h1, CL_TRUE, 0, width*height * sizeof(float), output, 0, NULL, NULL)
+           input_buffer_h1, CL_TRUE, 0, width*height * sizeof(float), h1, 0, NULL, NULL)
        != CL_SUCCESS ) {
     fprintf(stderr, "cannot enqueue read of buffer c\n");
     return 1;
@@ -184,24 +235,25 @@ main(int argc, char* argv[])
     return 1;
   }
 
+  double mean = 0.f;
+  for(size_t ix = 1; ix < height-1; ix++){
+    for(size_t jx = 1; jx < width-1; jx++){
+      mean += (double) h1[ix*width + jx] / (double) ((width-2lu)*(height-2lu)); 
+    }
+  }
+  // Snabbare men sämre precision:
+  //mean /= (double) ((width-2lu)*(height-2lu));
+
+  double abs_diff_mean = 0.f;
+  for(size_t ix = 1; ix < height-1; ix++){
+    for(size_t jx = 1; jx < width-1; jx++){
+      abs_diff_mean += fabs((double)h1[ix*width + jx] - mean) / (double) ((width-2lu)*(height-2lu)); 
+    }
+  }
+  // Snabbare men sämre precision:
+  //abs_diff_mean /= (double) ((width-2lu)*(height-2lu));
+
   free(h1);
-  free(h2);
-
-  double mean = 0;
-  for(size_t ix = 1; ix < height-1; ix++){
-    for(size_t jx = 1; jx width-1; jx++){
-      mean += output[ix*width + jx] /(double) (width*height); 
-    }
-  }
-
-  double abs_diff_mean = 0;
-  for(size_t ix = 1; ix < height-1; ix++){
-    for(size_t jx = 1; jx width-1; jx++){
-      abs_diff_mean += fabs((output[ix*width + jx] - mean) /(double) (width*height)); 
-    }
-  }
-
-  free(output);
 
   clReleaseMemObject(input_buffer_h1);
   clReleaseMemObject(input_buffer_h2);
