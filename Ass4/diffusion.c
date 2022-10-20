@@ -235,7 +235,7 @@ main(int argc, char* argv[])
     return 1;
   }
 
-  double mean = 0.f;
+  double mean = 0.;
   for(size_t ix = 1; ix < height-1; ix++){
     for(size_t jx = 1; jx < width-1; jx++){
       mean += (double) h1[ix*width + jx] / (double) ((width-2lu)*(height-2lu)); 
@@ -244,7 +244,7 @@ main(int argc, char* argv[])
   // Snabbare men sämre precision:
   //mean /= (double) ((width-2lu)*(height-2lu));
 
-  double abs_diff_mean = 0.f;
+  double abs_diff_mean = 0.;
   for(size_t ix = 1; ix < height-1; ix++){
     for(size_t jx = 1; jx < width-1; jx++){
       abs_diff_mean += fabs((double)h1[ix*width + jx] - mean) / (double) ((width-2lu)*(height-2lu)); 
