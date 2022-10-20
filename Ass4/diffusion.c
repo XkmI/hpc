@@ -196,8 +196,10 @@ main(int argc, char* argv[])
     return 1;
   }
 
+  const cl_float diff_const_clfloat = (cl_float) diff_const;
   clSetKernelArg(kernel_diff, 0, sizeof(cl_mem), &input_buffer_h1);
   clSetKernelArg(kernel_diff, 1, sizeof(cl_mem), &input_buffer_h2);
+  clSetKernelArg(kernel_diff, 2, sizeof(cl_float), &diff_const_clfloat);
     
   const size_t global_sz[] = {height - 2lu, width - 2lu}; //excluding the borders !!!!!
   const size_t local_sz = 10lu;
