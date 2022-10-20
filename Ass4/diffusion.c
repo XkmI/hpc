@@ -110,7 +110,7 @@ main(int argc, char* argv[])
         n_steps = atoi(optarg);
         break;
       case 'd':
-        diff_const = atoi(optarg);
+        diff_const = atof(optarg);
         break;
       case '?':
         fprintf(stderr, "Invalid argumentn");
@@ -200,7 +200,7 @@ main(int argc, char* argv[])
   clSetKernelArg(kernel_diff, 1, sizeof(cl_mem), &input_buffer_h2);
     
   const size_t global_sz[] = {height - 2lu, width - 2lu}; //excluding the borders !!!!!
-  const size_t local_sz[] = {10lu, 10lu};
+  const size_t local_sz = 10lu;
   cl_mem temp;
   for(size_t ix = 0; ix < n_steps; ix++){
     if ( clEnqueueNDRangeKernel(command_queue, kernel_diff,
