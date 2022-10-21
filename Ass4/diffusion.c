@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stddef.h>
+#include <unistd.h>
 #include <string.h>
 #include <math.h>
 #define CL_TARGET_OPENCL_VERSION 300
@@ -100,7 +101,7 @@ main(int argc, char* argv[])
   }
 
   size_t n_steps;
-  int diff_const;
+  float diff_const;
   int c;
 
   while((c = getopt(argc, argv, "n:d:")) !=-1){
@@ -109,41 +110,48 @@ main(int argc, char* argv[])
         n_steps = atoi(optarg);
         break;
       case 'd':
-        diff_const = atoi(optarg)
+        diff_const = atof(optarg);
         break;
       case '?':
         fprintf(stderr, "Invalid argumentn");
-        exit(1)
+        exit(1);
       default:
         abort();
     }
   }
 
-  cl_mem input_buffer_h1, input_buffer_h2;
-  input_buffer_h1 = clCreateBuffer(context, CL_MEM_READ_WRITE,
-                       width*height * sizeof(float), NULL, &error);
-  if ( error != CL_SUCCESS ) {
-    fprintf(stderr, "cannot create buffer h1\n");
-    return 1;
-  }
-  input_buffer_h2 = clCreateBuffer(context, CL_MEM_READ_WRITE,
-                       width*height * sizeof(float), NULL, &error);
-  if ( error != CL_SUCCESS ) {
-    fprintf(stderr, "cannot create buffer h2\n");
-    return 1;
-  }
+  // cl_mem input_buffer_h1, input_buffer_h2;
+  // input_buffer_h1 = clCreateBuffer(context, CL_MEM_READ_WRITE,
+  //                      width*height * sizeof(float), NULL, &error);
+  // if ( error != CL_SUCCESS ) {
+  //   fprintf(stderr, "cannot create buffer h1\n");
+  //   return 1;
+  // }
+  // input_buffer_h2 = clCreateBuffer(context, CL_MEM_READ_WRITE,
+  //                      width*height * sizeof(float), NULL, &error);
+  // if ( error != CL_SUCCESS ) {
+  //   fprintf(stderr, "cannot create buffer h2\n");
+  //   return 1;
+  // }
 
+  // printf("läsning påbörjas\n");
   // Commence Gnocchi
   float* h1;
   size_t width, height;
   {
     FILE* initfile = fopen("init","r");
+    // FILE* initfile = fopen("/home/hpc2022/diffusion_opencl/test_data/init_100_100","r");
+    // FILE* initfile = fopen("/home/hpc2022/diffusion_opencl/test_data/init_10000_10000","r");
+    // FILE* initfile = fopen("/home/hpc2022/diffusion_opencl/test_data/init_100000_100","r");
+    // FILE* initfile = fopen("init_100000_100_smol","r");
+    // FILE* initfile = fopen("init_100000_100_lorge","r");
     if (initfile == NULL) {
       perror("error:");
       exit(1);
     }
 
     fseek(initfile,0,SEEK_END);
+    // const size_t initfilesize = ftell(initfile)/sizeof(char) + 1;
     const size_t initfilesize = ftell(initfile)/sizeof(char);
     fseek(initfile,0,SEEK_SET);
 
@@ -151,6 +159,8 @@ main(int argc, char* argv[])
     fread(initfileStr, sizeof(char), initfilesize, initfile);
 
     fclose(initfile);
+
+    // initfileStr[initfilesize] = '\0';
 
     //printf ("Splitting string \"%s\" into tokens:\n",initfileStr);
     char* tok; const char whitespace[3] = " \n";
@@ -169,11 +179,14 @@ main(int argc, char* argv[])
     // Misstänker att det finns nåt mindre ass sätt att göra detta på, men detta får duga tillsvidare.
     // Dumping of file init into matrix h1 (with zero-padding).
     size_t jx;
+    size_t kx;
     while ((tok = strtok(NULL, whitespace)) != NULL) {
+      // printf("Token is: %s\n",tok);
       ix = strtoul(tok, NULL, 10);
       jx = strtoul(strtok(NULL, whitespace), NULL, 10);
       h1[(ix+1)*width + (jx+1)] = strtof(strtok(NULL, whitespace), NULL);
       //printf("Hello, (%zu,%zu) : %f\n", ix, jx, h1[(ix+1)*(nCols+2) + (jx+1)]);
+      kx++;
     }
 
     //printf("Element (1,3) är nu %f\n", h1[2*(nCols+2)+4]);
@@ -181,6 +194,22 @@ main(int argc, char* argv[])
     free(initfileStr);
   }
   // End Gnocchi
+  // printf("läsning klar\n");
+
+  cl_mem input_buffer_h1, input_buffer_h2;
+  input_buffer_h1 = clCreateBuffer(context, CL_MEM_READ_WRITE,
+                       width*height * sizeof(float), NULL, &error);
+  if ( error != CL_SUCCESS ) {
+    fprintf(stderr, "cannot create buffer h1\n");
+    return 1;
+  }
+
+  input_buffer_h2 = clCreateBuffer(context, CL_MEM_READ_WRITE,
+                       width*height * sizeof(float), NULL, &error);
+  if ( error != CL_SUCCESS ) {
+    fprintf(stderr, "cannot create buffer h2\n");
+    return 1;
+  }
 
   if ( clEnqueueWriteBuffer(command_queue,
            input_buffer_h1, CL_TRUE, 0, width*height * sizeof(float), h1, 0, NULL, NULL)
@@ -195,23 +224,27 @@ main(int argc, char* argv[])
     return 1;
   }
 
-  clSetKernelArg(kernel_diff, 0, sizeof(cl_mem), &input_buffer_h1);
-  clSetKernelArg(kernel_diff, 1, sizeof(cl_mem), &input_buffer_h2);
-    
-  const size_t global_sz[] = {height - 2lu, width - 2lu}; //excluding the borders !!!!!
-  const size_t local_sz[] = {10, 10};
+  // clSetKernelArg(kernel_diff, 0, sizeof(cl_mem), &input_buffer_h1);
+  // clSetKernelArg(kernel_diff, 1, sizeof(cl_mem), &input_buffer_h2);
+  clSetKernelArg(kernel_diff, 2, sizeof(float), &diff_const);
+   
+  const size_t global_sz[2] = {height - 2lu, width - 2lu}; //excluding the borders !!!!!
+  const size_t local_sz[2] = {10lu, 10lu};
   cl_mem temp;
-  for(ix = 0; ix < nsteps; ix++){
-    if ( clEnqueueNDRangeKernel(command_queue, kernel_diff,
-             2, NULL, (const size_t *) &global_sz, &local_sz, 0, NULL, NULL)
-         != CL_SUCCESS ) {
-      fprintf(stderr, "cannot enqueue kernel_diff\n");
+  // printf("diffundering påbörjas\n");
+  for(size_t ix = 0; ix < n_steps; ix++){
+    clSetKernelArg(kernel_diff, 0, sizeof(cl_mem), &input_buffer_h1);
+    clSetKernelArg(kernel_diff, 1, sizeof(cl_mem), &input_buffer_h2);
+    int errorcode = clEnqueueNDRangeKernel(command_queue, kernel_diff, 2, NULL, (const size_t *) &global_sz, (const size_t *) &local_sz, 0, NULL, NULL); 
+    if(errorcode != CL_SUCCESS ) {
+      fprintf(stderr, "cannot enqueue kernel_diff: %d\n", errorcode);
       return 1;
     }
     temp = input_buffer_h1;
     input_buffer_h1 = input_buffer_h2;
     input_buffer_h2 = temp;
   }
+  // printf("diffundering klar\n");
 
   // size_t local_redsz = 32;
   // size_t nredgps = 
@@ -222,36 +255,42 @@ main(int argc, char* argv[])
   // clSetKernelArg(kernel_diff, 3, sizeof(cl_mem), &input_buffer_h1);
 
   // Reuse h1 as output
-  //float *output = malloc(width*height * sizeof(float));
+  // printf("läsning påbörjas\n");
+  float *output = malloc(width*height * sizeof(float));
   if ( clEnqueueReadBuffer(command_queue,
-           input_buffer_h1, CL_TRUE, 0, width*height * sizeof(float), h1, 0, NULL, NULL)
+           input_buffer_h1, CL_TRUE, 0, width*height * sizeof(float), output, 0, NULL, NULL)
        != CL_SUCCESS ) {
     fprintf(stderr, "cannot enqueue read of buffer c\n");
     return 1;
   }
+  // printf("läsning klar\n");
 
   if ( clFinish(command_queue) != CL_SUCCESS ) {
     fprintf(stderr, "cannot finish queue\n");
     return 1;
   }
 
+  // printf("mean påbörjas\n");
   double mean = 0.;
   for(size_t ix = 1; ix < height-1; ix++){
     for(size_t jx = 1; jx < width-1; jx++){
-      mean += (double) h1[ix*width + jx] / (double) ((width-2lu)*(height-2lu)); 
+      mean += (double) output[ix*width + jx] / (double) ((width-2lu)*(height-2lu)); 
     }
   }
   // Snabbare men sämre precision:
   //mean /= (double) ((width-2lu)*(height-2lu));
+  // printf("mean klar\n");
 
+  // printf("diff_mean påbörjas\n");
   double abs_diff_mean = 0.;
   for(size_t ix = 1; ix < height-1; ix++){
     for(size_t jx = 1; jx < width-1; jx++){
-      abs_diff_mean += fabs((double)h1[ix*width + jx] - mean) / (double) ((width-2lu)*(height-2lu)); 
+      abs_diff_mean += fabs((double)output[ix*width + jx] - mean) / (double) ((width-2lu)*(height-2lu)); 
     }
   }
   // Snabbare men sämre precision:
   //abs_diff_mean /= (double) ((width-2lu)*(height-2lu));
+  // printf("diff_mean klar\n");
 
   free(h1);
 

@@ -1,6 +1,6 @@
-PROGRAM = matFromFile
+PROGRAM = matFromFile diffusion
 CC = gcc
-CFLAGS = -O0 -Wall #-g
+CFLAGS = -O0 -Wall -lOpenCL #-g
 #LIBS = -lpthread -lm #-lgsl -lgslcblas
 
 .PHONY: all
