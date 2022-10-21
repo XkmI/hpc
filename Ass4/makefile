@@ -1,14 +1,13 @@
-PROGRAM = matFromFile diffusion
+PROGRAM = diffusion #matFromFile 
 CC = gcc
-CFLAGS = -O0 -Wall -lOpenCL #-g
-#LIBS = -lpthread -lm #-lgsl -lgslcblas
+CFLAGS = -O2 -Wall #-g
+LIBS = -lOpenCL -lm #-lpthread -lgsl -lgslcblas
 
 .PHONY: all
 all: $(PROGRAM)
 
 $(PROGRAM) : %: %.c;
-	$(CC) -o $@ $< $(CFLAGS)
-#$(LIBS)
+	$(CC) -o $@ $< $(CFLAGS) $(LIBS)
 
 .PHONY: clean
 clean:

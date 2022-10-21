@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <getopt.h>
 #define CL_TARGET_OPENCL_VERSION 300
 #include <CL/cl.h>
 
@@ -120,21 +121,6 @@ main(int argc, char* argv[])
     }
   }
 
-  // cl_mem input_buffer_h1, input_buffer_h2;
-  // input_buffer_h1 = clCreateBuffer(context, CL_MEM_READ_WRITE,
-  //                      width*height * sizeof(float), NULL, &error);
-  // if ( error != CL_SUCCESS ) {
-  //   fprintf(stderr, "cannot create buffer h1\n");
-  //   return 1;
-  // }
-  // input_buffer_h2 = clCreateBuffer(context, CL_MEM_READ_WRITE,
-  //                      width*height * sizeof(float), NULL, &error);
-  // if ( error != CL_SUCCESS ) {
-  //   fprintf(stderr, "cannot create buffer h2\n");
-  //   return 1;
-  // }
-
-  // printf("läsning påbörjas\n");
   // Commence Gnocchi
   float* h1;
   size_t width, height;
@@ -211,6 +197,20 @@ main(int argc, char* argv[])
     return 1;
   }
 
+  cl_mem input_buffer_h1, input_buffer_h2;
+  input_buffer_h1 = clCreateBuffer(context, CL_MEM_READ_WRITE,
+                       width*height * sizeof(float), NULL, &error);
+  if ( error != CL_SUCCESS ) {
+    fprintf(stderr, "cannot create buffer h1\n");
+    return 1;
+  }
+  input_buffer_h2 = clCreateBuffer(context, CL_MEM_READ_WRITE,
+                       width*height * sizeof(float), NULL, &error);
+  if ( error != CL_SUCCESS ) {
+    fprintf(stderr, "cannot create buffer h2\n");
+    return 1;
+  }
+
   if ( clEnqueueWriteBuffer(command_queue,
            input_buffer_h1, CL_TRUE, 0, width*height * sizeof(float), h1, 0, NULL, NULL)
        != CL_SUCCESS ) {
@@ -224,38 +224,26 @@ main(int argc, char* argv[])
     return 1;
   }
 
-  // clSetKernelArg(kernel_diff, 0, sizeof(cl_mem), &input_buffer_h1);
-  // clSetKernelArg(kernel_diff, 1, sizeof(cl_mem), &input_buffer_h2);
   clSetKernelArg(kernel_diff, 2, sizeof(float), &diff_const);
    
   const size_t global_sz[2] = {height - 2lu, width - 2lu}; //excluding the borders !!!!!
   const size_t local_sz[2] = {10lu, 10lu};
   cl_mem temp;
-  // printf("diffundering påbörjas\n");
   for(size_t ix = 0; ix < n_steps; ix++){
     clSetKernelArg(kernel_diff, 0, sizeof(cl_mem), &input_buffer_h1);
     clSetKernelArg(kernel_diff, 1, sizeof(cl_mem), &input_buffer_h2);
-    int errorcode = clEnqueueNDRangeKernel(command_queue, kernel_diff, 2, NULL, (const size_t *) &global_sz, (const size_t *) &local_sz, 0, NULL, NULL); 
-    if(errorcode != CL_SUCCESS ) {
-      fprintf(stderr, "cannot enqueue kernel_diff: %d\n", errorcode);
+    if ( clEnqueueNDRangeKernel(command_queue, kernel_diff,
+             2, NULL, (const size_t *) &global_sz, &local_sz, 0, NULL, NULL)
+         != CL_SUCCESS ) {
+      fprintf(stderr, "cannot enqueue kernel_diff\n");
       return 1;
     }
     temp = input_buffer_h1;
     input_buffer_h1 = input_buffer_h2;
     input_buffer_h2 = temp;
   }
-  // printf("diffundering klar\n");
-
-  // size_t local_redsz = 32;
-  // size_t nredgps = 
-  // const cl_int sz_clint = (clint) (height - 1) * (width - 1);
-  // clSetKernelArg(kernel_diff, 0, sizeof(cl_mem), &input_buffer_h1);
-  // clSetKernelArg(kernel_diff, 1, sizeof(cl_mem), &input_buffer_h1);
-  // clSetKernelArg(kernel_diff, 2, sizeof(cl_mem), &input_buffer_h1);
-  // clSetKernelArg(kernel_diff, 3, sizeof(cl_mem), &input_buffer_h1);
 
   // Reuse h1 as output
-  // printf("läsning påbörjas\n");
   float *output = malloc(width*height * sizeof(float));
   if ( clEnqueueReadBuffer(command_queue,
            input_buffer_h1, CL_TRUE, 0, width*height * sizeof(float), output, 0, NULL, NULL)
@@ -263,14 +251,12 @@ main(int argc, char* argv[])
     fprintf(stderr, "cannot enqueue read of buffer c\n");
     return 1;
   }
-  // printf("läsning klar\n");
 
   if ( clFinish(command_queue) != CL_SUCCESS ) {
     fprintf(stderr, "cannot finish queue\n");
     return 1;
   }
 
-  // printf("mean påbörjas\n");
   double mean = 0.;
   for(size_t ix = 1; ix < height-1; ix++){
     for(size_t jx = 1; jx < width-1; jx++){
@@ -279,9 +265,7 @@ main(int argc, char* argv[])
   }
   // Snabbare men sämre precision:
   //mean /= (double) ((width-2lu)*(height-2lu));
-  // printf("mean klar\n");
 
-  // printf("diff_mean påbörjas\n");
   double abs_diff_mean = 0.;
   for(size_t ix = 1; ix < height-1; ix++){
     for(size_t jx = 1; jx < width-1; jx++){
@@ -290,7 +274,6 @@ main(int argc, char* argv[])
   }
   // Snabbare men sämre precision:
   //abs_diff_mean /= (double) ((width-2lu)*(height-2lu));
-  // printf("diff_mean klar\n");
 
   free(h1);
 
