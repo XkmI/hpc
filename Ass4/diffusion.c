@@ -125,12 +125,14 @@ main(int argc, char* argv[])
   float* h1;
   size_t width, height;
   {
-    FILE* initfile = fopen("init","r");
+    // FILE* initfile = fopen("init","r");
     // FILE* initfile = fopen("/home/hpc2022/diffusion_opencl/test_data/init_100_100","r");
     // FILE* initfile = fopen("/home/hpc2022/diffusion_opencl/test_data/init_10000_10000","r");
+    // FILE* initfile = fopen("/home/hpc2022/diffusion_opencl/test_data/init_10000_1000","r");
     // FILE* initfile = fopen("/home/hpc2022/diffusion_opencl/test_data/init_100000_100","r");
     // FILE* initfile = fopen("init_100000_100_smol","r");
     // FILE* initfile = fopen("init_100000_100_lorge","r");
+    FILE* initfile = fopen("init_jltest","r");
     if (initfile == NULL) {
       perror("error:");
       exit(1);
@@ -189,21 +191,6 @@ main(int argc, char* argv[])
     fprintf(stderr, "cannot create buffer h1\n");
     return 1;
   }
-
-  input_buffer_h2 = clCreateBuffer(context, CL_MEM_READ_WRITE,
-                       width*height * sizeof(float), NULL, &error);
-  if ( error != CL_SUCCESS ) {
-    fprintf(stderr, "cannot create buffer h2\n");
-    return 1;
-  }
-
-  cl_mem input_buffer_h1, input_buffer_h2;
-  input_buffer_h1 = clCreateBuffer(context, CL_MEM_READ_WRITE,
-                       width*height * sizeof(float), NULL, &error);
-  if ( error != CL_SUCCESS ) {
-    fprintf(stderr, "cannot create buffer h1\n");
-    return 1;
-  }
   input_buffer_h2 = clCreateBuffer(context, CL_MEM_READ_WRITE,
                        width*height * sizeof(float), NULL, &error);
   if ( error != CL_SUCCESS ) {
@@ -233,7 +220,7 @@ main(int argc, char* argv[])
     clSetKernelArg(kernel_diff, 0, sizeof(cl_mem), &input_buffer_h1);
     clSetKernelArg(kernel_diff, 1, sizeof(cl_mem), &input_buffer_h2);
     if ( clEnqueueNDRangeKernel(command_queue, kernel_diff,
-             2, NULL, (const size_t *) &global_sz, &local_sz, 0, NULL, NULL)
+             2, NULL, (const size_t *) &global_sz, (const size_t *) &local_sz, 0, NULL, NULL)
          != CL_SUCCESS ) {
       fprintf(stderr, "cannot enqueue kernel_diff\n");
       return 1;
@@ -258,18 +245,22 @@ main(int argc, char* argv[])
   }
 
   double mean = 0.;
+  // float mean = 0.;
   for(size_t ix = 1; ix < height-1; ix++){
     for(size_t jx = 1; jx < width-1; jx++){
       mean += (double) output[ix*width + jx] / (double) ((width-2lu)*(height-2lu)); 
+      // mean += output[ix*width + jx] / ((width-2lu)*(height-2lu)); 
     }
   }
   // Snabbare men sämre precision:
   //mean /= (double) ((width-2lu)*(height-2lu));
 
   double abs_diff_mean = 0.;
+  // float abs_diff_mean = 0.;
   for(size_t ix = 1; ix < height-1; ix++){
     for(size_t jx = 1; jx < width-1; jx++){
       abs_diff_mean += fabs((double)output[ix*width + jx] - mean) / (double) ((width-2lu)*(height-2lu)); 
+      // abs_diff_mean += fabs(output[ix*width + jx] - mean) / ((width-2lu)*(height-2lu)); 
     }
   }
   // Snabbare men sämre precision:
