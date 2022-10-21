@@ -125,14 +125,14 @@ main(int argc, char* argv[])
   float* h1;
   size_t width, height;
   {
-    // FILE* initfile = fopen("init","r");
+    FILE* initfile = fopen("init","r");
     // FILE* initfile = fopen("/home/hpc2022/diffusion_opencl/test_data/init_100_100","r");
     // FILE* initfile = fopen("/home/hpc2022/diffusion_opencl/test_data/init_10000_10000","r");
     // FILE* initfile = fopen("/home/hpc2022/diffusion_opencl/test_data/init_10000_1000","r");
     // FILE* initfile = fopen("/home/hpc2022/diffusion_opencl/test_data/init_100000_100","r");
     // FILE* initfile = fopen("init_100000_100_smol","r");
     // FILE* initfile = fopen("init_100000_100_lorge","r");
-    FILE* initfile = fopen("init_jltest","r");
+    // FILE* initfile = fopen("init_jltest","r");
     if (initfile == NULL) {
       perror("error:");
       exit(1);
